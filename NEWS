@@ -1,0 +1,14 @@
+Version 0.1.0 (unreleased)
+
+  * First release.
+
+  * Windows module (iw4x-steam64.dll) for the 64-bit Steam client, loaded by
+    the game through the rundll32 attach entry point.
+
+  * Linux module (libiw4x-steam.so) for the 32-bit native Steam client, with
+    the iw4x-steam launcher that preloads it, for the game running under
+    Proton.
+
+  * Rewriting of the GamesPlayed reports of registered IW4x processes, so
+    that friends see IW4x under an app the account owns, and resending of a
+    report that Steam sent before the game registered.
