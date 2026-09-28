@@ -1,0 +1,16 @@
+: 1
+name: libcompanion
+version: 0.1.0-a.0.z
+type: lib
+language: c++
+project: companion
+summary: Steam friends presence for IW4x.
+license: GPL-3.0-only ; GNU General Public License v3.0 only.
+topics: game, Steam, Proton, presence
+url: https://github.com/iw4x/companion
+src-url: https://github.com/iw4x/companion
+email: wroy@proton.me
+#build-error-email: wroy@proton.me
+depends: * build2 >= 0.18.0
+depends: * bpkg >= 0.18.0
+builds: default : &gcc ; Only GCC is tested (16 or later, for std::dynamic_format in the tests).

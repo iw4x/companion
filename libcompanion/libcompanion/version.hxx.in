@@ -1,0 +1,37 @@
+// Copyright (c) the IW4x authors (see the AUTHORS file).
+// SPDX-License-Identifier: GPL-3.0-only
+
+#pragma once
+
+// The numeric version format is AAAAABBBBBCCCCCDDDE where:
+//
+// AAAAA - major version number
+// BBBBB - minor version number
+// CCCCC - bugfix version number
+// DDD   - alpha / beta (DDD + 500) version number
+// E     - final (0) / snapshot (1)
+//
+// When DDDE is not 0, 1 is subtracted from AAAAABBBBBCCCCC. For example:
+//
+// Version      AAAAABBBBBCCCCCDDDE
+//
+// 0.1.0        0000000001000000000
+// 0.1.2        0000000001000020000
+// 1.2.3        0000100002000030000
+// 2.2.0-a.1    0000200001999990010
+// 3.0.0-b.2    0000299999999995020
+// 2.2.0-a.1.z  0000200001999990011
+//
+#define LIBCOMPANION_VERSION       $libcompanion.version.project_number$ULL
+#define LIBCOMPANION_VERSION_STR   "$libcompanion.version.project$"
+#define LIBCOMPANION_VERSION_ID    "$libcompanion.version.project_id$"
+#define LIBCOMPANION_VERSION_FULL  "$libcompanion.version$"
+
+#define LIBCOMPANION_VERSION_MAJOR $libcompanion.version.major$
+#define LIBCOMPANION_VERSION_MINOR $libcompanion.version.minor$
+#define LIBCOMPANION_VERSION_PATCH $libcompanion.version.patch$
+
+#define LIBCOMPANION_PRE_RELEASE   $libcompanion.version.pre_release$
+
+#define LIBCOMPANION_SNAPSHOT_SN   $libcompanion.version.snapshot_sn$ULL
+#define LIBCOMPANION_SNAPSHOT_ID   "$libcompanion.version.snapshot_id$"
