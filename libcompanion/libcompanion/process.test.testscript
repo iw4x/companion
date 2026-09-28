@@ -1,0 +1,341 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Base tree: the Steam client 10 is a child of 5, which is a child of init.
+# By default, Steam reports process 100 (started at 1000), which is 5's
+# child, and the game's record has the IW4x name and the 10190 app id.
+#
+test.arguments = 10 100
+
++cat <<EOI >=steam
+  process 10 5 900
+  process 5 1 800
+  process 100 5 1000
+  EOI
+
+: found
+:
+: Test a record of the reported process itself.
+:
+cat ../steam - <<EOI | $* >'found 10190 IW4x'
+  record 100 1000 10190 IW4x
+  EOI
+
+: descendant
+:
+: Test a record of the wineserver that is the reported process's
+: grandchild.
+:
+cat ../steam - <<EOI | $* >'found 10190 IW4x'
+  children 100 101
+  process 101 100 1001
+  children 101 102
+  process 102 101 1002
+  record 102 1002 10190 IW4x
+  EOI
+
+: none
+:
+cat ../steam - <<EOI | $* >'none'
+  children 100 101
+  process 101 100 1001
+  EOI
+
+: zero
+:
+: Test the reported pid 0 (no process).
+:
+test.arguments = 10 0;
+$* <=../steam >'none'
+
+: start
+:
+: Test stale records of earlier processes with the same pid.
+:
+{{
+  : earlier
+  :
+  cat ../../steam - <<EOI | $* >'none'
+    record 100 999 10190 IW4x
+    EOI
+
+  : high
+  :
+  : Test a start time that exceeds 32 bits.
+  :
+  cat ../../steam - <<EOI | $* >'found 10190 IW4x'
+    process 100 5 5000000000
+    record 100 5000000000 10190 IW4x
+    EOI
+
+  : high-mismatch
+  :
+  cat ../../steam - <<EOI | $* >'none'
+    process 100 5 5000000000
+    record 100 705032704 10190 IW4x
+    EOI
+}}
+
+: namespace
+:
+: Test the pid namespaces with the wineserver 102 visible as 7 in the
+: container.
+:
+{{
+  +cat ../steam - <<EOI >=tree
+    children 100 102
+    EOI
+
+  : inner
+  :
+  cat ../tree - <<EOI | $* >'found 10190 IW4x'
+    process 102 100 1002 102 7
+    record 7 1002 10190 IW4x
+    EOI
+
+  : outer
+  :
+  cat ../tree - <<EOI | $* >'found 10190 IW4x'
+    process 102 100 1002 102 7
+    record 102 1002 10190 IW4x
+    EOI
+
+  : none
+  :
+  : Test a status without the NSpid line (Linux before 4.1), in which case
+  : only 102 is tried.
+  :
+  cat ../tree - <<EOI | $* >'none'
+    process 102 100 1002
+    record 7 1002 10190 IW4x
+    EOI
+
+  : fallback
+  :
+  cat ../tree - <<EOI | $* >'found 10190 IW4x'
+    process 102 100 1002
+    record 102 1002 10190 IW4x
+    EOI
+
+  : separator
+  :
+  : Test an NSpid line with a space after the colon, which is malformed.
+  :
+  cat ../tree - <<EOI | $* >'none'
+    process 102 100 1002
+    status 102 Name:\twine\nNSpid: 102\t7\n
+    record 7 1002 10190 IW4x
+    EOI
+
+  : malformed
+  :
+  : Test an NSpid line with space-separated pids, which is malformed.
+  :
+  cat ../tree - <<EOI | $* >'none'
+    process 102 100 1002
+    status 102 Name:\twine\nNSpid:\t102 7\n
+    record 7 1002 10190 IW4x
+    EOI
+
+  : incomplete
+  :
+  : Test an NSpid line without the newline, which is treated as truncated.
+  :
+  cat ../tree - <<EOI | $* >'none'
+    process 102 100 1002
+    status 102 Name:\twine\nNSpid:\t102\t7
+    record 7 1002 10190 IW4x
+    EOI
+
+  : long
+  :
+  : Test a status that exceeds the buffer but has the complete NSpid line
+  : within it.
+  :
+  cat ../tree - <<EOI | $* >'found 10190 IW4x'
+    process 102 100 1002 102 7
+    pad status 102 5000
+    record 7 1002 10190 IW4x
+    EOI
+}}
+
+: related
+:
+: Test the Steam client and its ancestors, which are not searched since
+: their trees contain every game.
+:
+{{
+  : self
+  :
+  test.arguments = 10 10;
+  $* <=../../steam >'related'
+
+  : parent
+  :
+  test.arguments = 10 5;
+  $* <=../../steam >'related'
+
+  : init
+  :
+  test.arguments = 10 1;
+  $* <=../../steam >'related'
+
+  : sibling
+  :
+  : Test a sibling of the Steam client, which is searched.
+  :
+  test.arguments = 10 100;
+  cat ../../steam - <<EOI | $* >'found 10190 IW4x'
+    record 100 1000 10190 IW4x
+    EOI
+}}
+
+: stat
+:
+{{
+  : command
+  :
+  : Test a command with spaces and parentheses.
+  :
+  cat ../../steam - <<EOI | $* >'found 10190 IW4x'
+    stat 100 100 (a) (b c) S 5 100 100 0 -1 4194560 120 0 0 0 3 1 0 0 20 0 1 0 1000 3 4
+    record 100 1000 10190 IW4x
+    EOI
+
+  : separator
+  :
+  : Test a stat without the space after the command.
+  :
+  cat ../../steam - <<EOI | $* >'none'
+    stat 100 100 (wine)S 5 100 100 0 -1 4194560 120 0 0 0 3 1 0 0 20 0 1 0 1000 3 4
+    record 100 1000 10190 IW4x
+    EOI
+
+  : newline
+  :
+  : Test a command with a newline.
+  :
+  cat ../../steam - <<EOI | $* >'found 10190 IW4x'
+    stat 100 100 (a\n) b) S 5 100 100 0 -1 4194560 120 0 0 0 3 1 0 0 20 0 1 0 1000 3 4
+    record 100 1000 10190 IW4x
+    EOI
+
+  : short
+  :
+  : Test a stat that ends before the start time field.
+  :
+  cat ../../steam - <<EOI | $* >'none'
+    stat 100 100 (wine) S 5 100 100 0 -1 4194560 120 0 0 0 3 1 0 0 20 0 1 0
+    record 100 1000 10190 IW4x
+    EOI
+
+  : parenthesis
+  :
+  cat ../../steam - <<EOI | $* >'none'
+    stat 100 100 wine S 5 100 100 0 -1 4194560 120 0 0 0 3 1 0 0 20 0 1 0 1000 3 4
+    record 100 1000 10190 IW4x
+    EOI
+
+  : start
+  :
+  cat ../../steam - <<EOI | $* >'none'
+    stat 100 100 (wine) S 5 100 100 0 -1 4194560 120 0 0 0 3 1 0 0 20 0 1 0 -1000 3 4
+    record 100 1000 10190 IW4x
+    EOI
+
+  : long
+  :
+  : Test a stat that exceeds the buffer.
+  :
+  cat ../../steam - <<EOI | $* >'none'
+    pad stat 100 5000
+    record 100 1000 10190 IW4x
+    EOI
+
+  : gone
+  :
+  : Test a child that has exited (no stat), which is skipped.
+  :
+  cat ../../steam - <<EOI | $* >'found 10190 IW4x'
+    children 100 101 102
+    process 102 100 1002
+    record 101 1001 10190 IW4x
+    record 102 1002 10190 IW4x
+    EOI
+}}
+
+: children
+:
+{{
+  : tasks
+  :
+  : Test children lists of several tasks.
+  :
+  cat ../../steam - <<EOI | $* >'found 10190 IW4x'
+    children 100 101
+    children 100 102
+    process 101 100 1001
+    process 102 100 1002
+    record 102 1002 10190 IW4x
+    EOI
+
+  : breadth
+  :
+  : Make sure the search is breadth-first by giving both a child and a
+  : grandchild records.
+  :
+  cat ../../steam - <<EOI | $* >'found 480 child'
+    children 100 101 102
+    children 101 103
+    process 101 100 1001
+    process 102 100 1002
+    process 103 101 1003
+    record 103 1003 10190 grandchild
+    record 102 1002 480 child
+    EOI
+
+  : cycle
+  :
+  : Make sure each process is searched once even if listed repeatedly.
+  :
+  cat ../../steam - <<EOI | $* >'none'
+    children 100 101 101
+    children 101 100 101
+    process 101 100 1001
+    EOI
+
+  : incomplete
+  :
+  : Test children lists that exceed the buffer. Make sure the pid that is
+  : cut off (999 of 9991) is not searched.
+  :
+  cat ../../steam - <<EOI | $* >'none'
+    pad children 100 4093
+    children 100 9991
+    process 999 100 1999
+    record 999 1999 10190 IW4x
+    EOI
+
+  : overflow
+  :
+  : Test the search capacity: process 100 and its first 255 children are
+  : searched.
+  :
+  {{
+    +cat ../../steam - <<EOI >=tree
+      fan 100 200 300
+      EOI
+
+    : last
+    :
+    cat ../tree - <<EOI | $* >'found 10190 IW4x'
+      record 454 1 10190 IW4x
+      EOI
+
+    : past
+    :
+    cat ../tree - <<EOI | $* >'overflow'
+      record 455 1 10190 IW4x
+      EOI
+  }}
+}}
