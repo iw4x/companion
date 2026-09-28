@@ -1,0 +1,10 @@
+/* Copyright (c) the IW4x authors (see the AUTHORS file).
+ * SPDX-License-Identifier: GPL-3.0-only
+ */
+
+/* Linux companion module version script. It makes every symbol local (see
+ * libs{iw4x-steam} in the buildfile).
+ */
+{
+  local: *;
+};

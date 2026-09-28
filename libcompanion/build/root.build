@@ -14,7 +14,8 @@ ixx{*}: extension = ixx
 txx{*}: extension = txx
 cxx{*}: extension = cxx
 
-# C is needed for the vendored MinHook (see minhook/buildfile).
+# C is needed for the vendored MinHook (see minhook/buildfile) and for the
+# Linux companion module's 64-bit stand-in (see libcompanion/stub-linux.c).
 #
 using c
 

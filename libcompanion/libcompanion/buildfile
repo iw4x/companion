@@ -10,11 +10,11 @@ impl_libs = # Implementation dependencies.
 #
 include ../minhook/
 
-# The library excludes the Windows module's platform code (*-win32), which
-# keeps it platform-independent and testable on any host.
+# The library excludes the companion modules' platform code (*-win32 and
+# *-linux), which keeps it platform-independent and testable on any host.
 #
 ./: lib{companion}: libul{companion}: \
-  {hxx ixx txx cxx}{** -**.test... -version -*-win32} \
+  {hxx ixx txx cxx}{** -**.test... -version -*-win32 -*-linux} \
   hxx{version} ../minhook/libul{hde} $impl_libs $intf_libs
 
 # Unit tests.
@@ -61,7 +61,54 @@ libs{iw4x-steam64}: {hxx txx cxx}{*-win32} libul{companion} \
 if ($cxx.target.system == 'mingw32')
   libs{iw4x-steam64}: cxx.loptions += -static
 
-# The module is only loaded, never linked, so we install the library
+
+# Linux companion module that the launcher preloads into the Steam client
+# (see host-linux.cxx and iw4x-steam.in).
+#
+# The Linux Steam client is 32-bit, so the module is only built for i386
+# targets. The launcher expects a fixed name, so the name has no version.
+#
+# Note that GCC reports the -m32 target only if it is built with multiarch
+# support (Debian, Ubuntu). On other distributions (Fedora, Arch) also
+# specify the target explicitly. For example:
+#
+#   config.cxx='g++ -m32' config.cxx.target=i686-linux-gnu \
+#   config.c='gcc -m32'   config.c.target=i686-linux-gnu
+#
+# Without it the target is detected as x86_64 and the build fails (see
+# stub-linux.c).
+#
+# The launcher preloads the module from lib/iw4x-steam/$PLATFORM/, which the
+# dynamic linker expands separately in each process. In an i386 process
+# $PLATFORM is i686. In an x86_64 process it is x86_64 or, if glibc detects
+# a CPU of the corresponding class, haswell or xeon_phi. Each of these three
+# directories contains an empty stand-in built for x86_64 targets, which the
+# 64-bit programs that start the Steam client load (see stub-linux.c).
+#
+linux  = ($cxx.target.class == 'linux')
+i386   = $regex.match($cxx.target.cpu, 'i[3-6]86')
+x86_64 = ($cxx.target.cpu == 'x86_64')
+
+./: libs{iw4x-steam}: include = ($linux && $i386)
+
+libs{iw4x-steam}: {hxx txx cxx}{*-linux} libul{companion}
+{
+  bin.lib.suffix = ''
+  install        = lib/iw4x-steam/i686/
+}
+
+for p: x86_64 haswell xeon_phi
+{
+  ./: $p/libs{iw4x-steam}: include = ($linux && $x86_64)
+
+  $p/libs{iw4x-steam}: c{stub-linux}
+  {
+    bin.lib.suffix = ''
+    install        = lib/iw4x-steam/$p/
+  }
+}
+
+# The modules are only loaded, never linked, so we install the libraries
 # without the development files (import library and pkg-config files).
 #
 # Note: we use patterns because a target name here would declare the
@@ -71,6 +118,31 @@ if ($cxx.target.system == 'mingw32')
 
 if $windows
   libi{iw4x-steam*}: install = false
+
+# A preloaded library is first in the symbol lookup scope of the process,
+# so each symbol it exports interposes the Steam client's symbol with the
+# same name. This includes the statically linked C++ runtime (see below) as
+# well as the template instantiations and inline functions that the module
+# shares with the client (for example, of std::basic_string). So the version
+# script makes all the module's symbols local, including those from our
+# objects, from libul{companion}, and from the runtime archives. The module
+# requires no exports since the dynamic linker calls its constructor
+# directly (see host-linux.cxx).
+#
+# The Steam client runs against the Steam Runtime's libstdc++, which can
+# predate the one we build with, so the module carries its own runtime.
+#
+libs{iw4x-steam}: file{iw4x-steam.map}: include = adhoc
+
+if ($linux && $i386)
+{
+  libs{iw4x-steam}:
+  {
+    cxx.loptions += -static-libstdc++ -static-libgcc \
+                    "-Wl,--version-script=$src_base/iw4x-steam.map"
+    cxx.libs += -ldl
+  }
+}
 
 # Build options.
 #
@@ -89,6 +161,12 @@ objs{*}: cxx.poptions += -DLIBCOMPANION_SHARED_BUILD
 # build (see export.hxx).
 #
 objs{*-win32}: cxx.poptions += "-I$src_root/minhook/include"
+
+# The Linux module exports nothing (see libs{iw4x-steam} above), so its code
+# is compiled with hidden visibility. On i386 this makes calls and data
+# references to its own symbols bypass the GOT and the PLT.
+#
+objs{*-linux}: cxx.coptions += -fvisibility=hidden
 
 # The detour builder includes <hde32.h>, which includes <windows.h> for its
 # integer types. Here <windows.h> is always the stand-in (see
@@ -130,6 +208,6 @@ else
   install.subdirs = true
 }
 
-# The Windows module's platform headers are internal and not installed.
+# The companion modules' platform headers are internal and not installed.
 #
-{hxx txx}{*-win32}: install = false
+{hxx txx}{*-win32 *-linux}: install = false
