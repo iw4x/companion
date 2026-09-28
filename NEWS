@@ -12,3 +12,6 @@ Version 0.1.0 (unreleased)
   * Rewriting of the GamesPlayed reports of registered IW4x processes, so
     that friends see IW4x under an app the account owns, and resending of a
     report that Steam sent before the game registered.
+
+  * The iw4x-steam(1) man page and the companion manual, which describes how
+    the companion works and the game protocol.

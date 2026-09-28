@@ -35,3 +35,17 @@ upstream/minhook/
 
   Updating: replace the imported files with those of a newer upstream tag,
   byte for byte, and update the version above.
+
+
+libcompanion/doc/style/
+
+  The style sheets of the generated documentation (see
+  libcompanion/doc/buildfile).
+
+  Origin:   https://github.com/build2/style
+  Version:  revision 05646557e84ff39240be24af6bba3376db6da697
+  Licence:  MIT (libcompanion/doc/style/LICENSE), copyright the build2
+            authors.
+  Imported: the style sheets and LICENSE, byte for byte, as used by the
+            IW4x toolchain repository.
+  Changes:  None.

@@ -1,0 +1,96 @@
+// Copyright (c) the IW4x authors (see the AUTHORS file).
+// SPDX-License-Identifier: GPL-3.0-only
+
+"\section=1"
+"\name=iw4x-steam"
+"\summary=start Steam client with IW4x companion"
+
+namespace companion
+{
+  {
+    "<steam-argument>",
+
+    "\h|SYNOPSIS|
+
+     \c{\b{iw4x-steam} [<steam-argument>...]}
+
+     \h|DESCRIPTION|
+
+     The \cb{iw4x-steam} command starts the native Linux Steam client with
+     the IW4x companion module preloaded. While the module is loaded, Steam
+     friends see IW4x running under Proton as the game being played. The
+     arguments are passed to the Steam command unchanged. For example:
+
+     \
+     $ iw4x-steam -silent
+     \
+
+     The Steam client can only load the module at startup, so it must not
+     be running already. If it is, then \cb{iw4x-steam} fails without
+     starting anything since \cb{steam} would pass the arguments to the
+     running client, which does not load the module.
+
+     The module is preloaded from the \cb{lib/iw4x-steam/} directory of the
+     installation that \cb{iw4x-steam} belongs to, in the subdirectory named
+     after the dynamic linker's \cb{$PLATFORM} (see \cb{ld.so(8)}). In the
+     32-bit Steam client it expands to \cb{i686}, which contains the module.
+     In the 64-bit programs that start the client it expands to \cb{x86_64},
+     \cb{haswell}, or \cb{xeon_phi}, each of which contains an empty 64-bit
+     stand-in that keeps the dynamic linker from warning about the preload.
+     The module removes itself from \cb{LD_PRELOAD} as it loads, so the
+     processes that these programs start, including games and Proton, do not
+     inherit it.
+
+     The companion writes its diagnostics to the Steam client's \cb{stderr},
+     which the client normally copies to its console log,
+     \cb{~/.steam/steam/logs/console-linux.txt}. Each line starts with
+     \cb{[iw4x-steam]} and a successful startup ends with a line like this:
+
+     \
+     [iw4x-steam] active (build 2)
+     \
+
+     See the \cb{companion} manual for details on how the companion works and
+     on the other diagnostics that it issues.
+
+     \h|ENVIRONMENT|
+
+     \dl|
+
+     \li|\cb{IW4X_STEAM}
+
+     The Steam command to run. If unset, \cb{steam} is searched for in
+     \cb{PATH}.|
+
+     \li|\cb{LD_PRELOAD}
+
+     The module is added in front of the existing value, which is otherwise
+     preserved.||
+
+     \h|FILES|
+
+     \dl|
+
+     \li|\c{\i{prefix}\b{/lib/iw4x-steam/i686/libiw4x-steam.so}}
+
+     The companion module.|
+
+     \li|\c{\i{prefix}\b{/lib/iw4x-steam/x86_64/libiw4x-steam.so}}
+
+     The 64-bit stand-in. The \cb{haswell} and \cb{xeon_phi} subdirectories
+     contain the same stand-in.|
+
+     \li|\c{\b{/dev/shm/iw4x-steam-companion.}\i{uid}}
+
+     The companion status, which the game reads. The companion keeps the
+     file locked while it runs, so only one companion is active per user.||
+
+     \h|EXIT STATUS|
+
+     If the module is not installed or Steam is already running, then
+     \cb{iw4x-steam} issues diagnostics and exits with status 1. Otherwise,
+     it executes the Steam command in its place, so the exit status is that
+     of the command.
+     "
+  }
+}

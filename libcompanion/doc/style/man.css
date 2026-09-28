@@ -1,0 +1,35 @@
+/* file      : man.css
+ * license   : MIT; see accompanying LICENSE file
+ */
+
+/* Bases:
+ *
+ * common.css
+ * pre-box.css
+ *
+ */
+
+#content
+{
+  max-width: 42.1em;
+  padding-left: 1.5em; /* Reserve for the heading. */
+}
+
+h1
+{
+  font-weight: normal;
+  font-size: 1.58em;
+  line-height: 1.4em;
+  margin: 1.6em 0 .6em -.88em;
+}
+
+/* Definition list for options. */
+dl.options dt {margin: 1em 0 0 0;}
+dl.options dd {margin: .1em 0 0 4.5em;}
+
+/* Make lists inside option descriptions a tad smaller. */
+dl.options dd ul, dl.options dd ol, dl.options dd dl
+{
+  font-size: 0.889em;
+  line-height: 1.4em;
+}

@@ -1,0 +1,112 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+define cli: file
+cli{*}: extension = cli
+
+define css: file
+css{*}: extension = css
+
+define xhtml: doc
+xhtml{*}: extension = xhtml
+
+# The documentation sources. Note that file{} targets (and the cli{} and css{}
+# targets derived from it) are distributed but not installed.
+#
+./: cli{iw4x-steam manual} file{man-* doc-*} style/{css{*} file{LICENSE}}
+
+# The man page and the manual are generated with the CLI compiler in the
+# development build and distributed, so that the consumption build gets them
+# without it. They are never kept in the repository.
+#
+
+## Consumption build ($develop == false).
+#
+
+# Use the pregenerated versions, which only the distribution has.
+#
+./: pregenerated/{man1 xhtml}{*}: include = (!$develop)
+
+# Distribute the pregenerated versions only in the consumption build.
+#
+pregenerated/{man1 xhtml}{*}: dist = (!$develop)
+
+#
+##
+
+## Development build ($develop == true).
+#
+
+./: man1{iw4x-steam} xhtml{iw4x-steam libcompanion-manual}: include = $develop
+
+if $develop
+{
+  import! [metadata] cli = cli%exe{cli}
+
+  # Use the date of the last commit, so that the same revision always
+  # produces the same documentation.
+  #
+  doc_date = $process.run(git -C $src_root log -1 '--format=%cd' \
+                          '--date=format:%B %Y')
+
+  doc_options = -v project=companion -v version=$version       \
+                -v copyright='the IW4x authors' -v date="$doc_date" \
+                --suppress-undocumented
+}
+
+# In the development build distribute the generated versions, remapping their
+# locations to the paths of the pregenerated versions (which are only
+# distributed in the consumption build, see above).
+#
+man1{iw4x-steam} xhtml{iw4x-steam libcompanion-manual}: \
+  dist = ($develop ? pregenerated/ : false)
+
+# The launcher only exists on Linux (see ../libcompanion/buildfile), so its
+# man page is only installed there.
+#
+if ($cxx.target.class != 'linux')
+{
+  {man1 xhtml}{iw4x-steam}:              install = false
+  pregenerated/{man1 xhtml}{iw4x-steam}: install = false
+}
+
+man1{iw4x-steam}: cli{iw4x-steam} file{man-prologue.1 man-epilogue.1} $cli
+%
+if $develop
+{{
+  diag 'cli --man' ($<[0]) -> $>
+
+  $cli $doc_options --generate-man --ascii-tree \
+    --man-prologue-file $path($<[1])                     \
+    --man-epilogue-file $path($<[2])                     \
+    --stdout $path($<[0]) >$path($>)
+}}
+
+xhtml{iw4x-steam}: cli{iw4x-steam} file{man-prologue.xhtml man-epilogue.xhtml} \
+                   style/css{common pre-box man} $cli
+%
+if $develop
+{{
+  diag 'cli --html' ($<[0]) -> $>
+
+  $cli $doc_options --generate-html --html-suffix .xhtml \
+    --html-prologue-file $path($<[1])                    \
+    --html-epilogue-file $path($<[2])                    \
+    --stdout $path($<[0]) >$path($>)
+}}
+
+xhtml{libcompanion-manual}: cli{manual}                                   \
+                            file{doc-prologue.xhtml doc-epilogue.xhtml}   \
+                            style/css{common pre-box code-box p-code-box  \
+                                      toc doc}                            \
+                            $cli
+%
+if $develop
+{{
+  diag 'cli --html' ($<[0]) -> $>
+
+  $cli $doc_options --generate-html --html-suffix .xhtml \
+    --html-prologue-file $path($<[1])                    \
+    --html-epilogue-file $path($<[2])                    \
+    --stdout $path($<[0]) >$path($>)
+}}

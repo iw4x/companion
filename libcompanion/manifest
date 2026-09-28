@@ -15,4 +15,5 @@ email: wroy@proton.me
 #build-error-email: wroy@proton.me
 depends: * build2 >= 0.18.0
 depends: * bpkg >= 0.18.0
+depends: * cli ^1.2.0 ? ($config.libcompanion.develop)
 builds: default : &gcc ; Only GCC is tested (16 or later, for std::dynamic_format in the tests).

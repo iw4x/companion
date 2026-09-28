@@ -1,6 +1,12 @@
 # Copyright (c) the IW4x authors (see the AUTHORS file).
 # SPDX-License-Identifier: GPL-3.0-only
 
+# The development build generates the documentation, which needs the CLI
+# compiler (see doc/buildfile for details).
+#
+config [bool] config.libcompanion.develop ?= false
+develop = $config.libcompanion.develop
+
 # Uncomment to suppress warnings coming from external libraries.
 #
 #cxx.internal.scope = current

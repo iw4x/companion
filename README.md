@@ -21,12 +21,23 @@ development files (`glibc-devel.i686` and `libstdc++-devel.i686` on Fedora).
 The Windows module requires MinGW-w64 GCC and, to run its tests on Linux,
 [Wine](https://www.winehq.org/).
 
+The development build also generates the man page and the manual with the
+[CLI](https://codesynthesis.com/projects/cli/) compiler, which `bdep` builds
+from `cppget.org` as a build-time dependency in a configuration of the host
+type. This is why the setup below initializes the project without any
+configurations first, then creates the host configuration, and only then
+initializes the project in the other configurations.
+
 The development setup uses the standard `bdep`-based workflow with a build
 configuration for each target. For example, on Linux:
 
 ```
 git clone https://github.com/iw4x/companion.git
 cd companion
+
+bdep init --empty
+bdep config create @host --type host --no-default ../companion-host \
+  cc config.config.load=~host
 
 bdep init -C ../companion-gcc @gcc cc \
   config.cxx=g++
@@ -44,7 +55,8 @@ bdep update -a
 bdep test @gcc @gcc32
 ```
 
-Each configuration builds and tests the library. In addition, `@gcc` builds
+The `@host` configuration only holds the build-time dependencies. Each of the
+other configurations builds and tests the library. In addition, `@gcc` builds
 the 64-bit stand-ins, `@gcc32` the Linux module and its launcher, and
 `@mingw` the Windows module. Note that GCC reports the i386 target of `-m32`
 only if it is built with multiarch support (Debian, Ubuntu), which is why
@@ -66,6 +78,10 @@ prompt (`cmd`), where `^` continues a line:
 git clone https://github.com/iw4x/companion.git
 cd companion
 
+bdep init --empty
+bdep config create @host --type host --no-default ..\companion-host ^
+  cc config.config.load=~host
+
 bdep init -C ..\companion-mingw @mingw cc ^
   config.cxx=g++
 
@@ -78,6 +94,10 @@ command line argument with a leading `@` has a special meaning in
 PowerShell. To work around this, use the alternative `-@mingw` syntax:
 
 ```
+bdep init --empty
+bdep config create -@host --type host --no-default ..\companion-host `
+  cc config.config.load=~host
+
 bdep init -C ..\companion-mingw -@mingw cc `
   config.cxx=g++
 ```
