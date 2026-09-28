@@ -27,7 +27,7 @@ the preload.
 
 First, create the two configurations:
 
-```
+```sh
 bpkg create -d companion-i686 cc   \
   config.cxx='g++ -m32'            \
   config.cxx.target=i686-linux-gnu \
@@ -52,7 +52,7 @@ and `pkg-config` files.
 
 Then build and install the companion in each configuration:
 
-```
+```sh
 bpkg build -d companion-i686 \
   libcompanion@https://github.com/iw4x/companion.git#main
 bpkg install -d companion-i686 libcompanion
@@ -64,7 +64,7 @@ bpkg install -d companion-x86_64 libcompanion
 
 Finally, exit Steam if it is running and start it with the launcher:
 
-```
+```sh
 iw4x-steam
 ```
 
