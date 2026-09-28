@@ -7,6 +7,7 @@ project: companion
 summary: Steam friends presence for IW4x.
 license: GPL-3.0-only AND BSD-2-Clause ; GPL-3.0 only, with MinHook under BSD-2-Clause (see LEGAL).
 topics: game, Steam, Proton, presence
+description-file: README.md
 url: https://github.com/iw4x/companion
 src-url: https://github.com/iw4x/companion
 email: wroy@proton.me
