@@ -1,0 +1,249 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+: rewrite
+: Test rewriting entries of registered processes
+:
+{{
+  : process-id
+  :
+  : Test an entry matched by process_id. Make sure the remaining fields
+  : (including unknown ones) and the fields outside the entry keep their
+  : order.
+  :
+  $* '4242=10190:IW4x' <<EOI >>EOO
+    1 {
+      2 f64 1234
+      7 'old'
+      9 4242
+      4000 f32 7
+    }
+    2 20
+    EOI
+    1 {
+      9 4242
+      4000 f32 7
+      2 f64 10190
+      7 'IW4x'
+    }
+    2 20
+    EOO
+
+  : process-list
+  :
+  : Test an entry matched by a process_id_list element.
+  :
+  $* '4242=480:IW4x' <<EOI >>EOO
+    1 {
+      9 1
+      32 {
+        1 4242
+        3 1
+      }
+    }
+    EOI
+    1 {
+      9 1
+      32 {
+        1 4242
+        3 1
+      }
+      2 f64 480
+      7 'IW4x'
+    }
+    EOO
+
+  : other-game
+  :
+  : Test a frame with entries of both unregistered and registered
+  : processes.
+  :
+  $* '4242=10190:IW4x' <<EOI >>EOO
+    1 {
+      2 f64 55
+      9 1337
+    }
+    1 {
+      9 4242
+    }
+    EOI
+    1 {
+      2 f64 55
+      9 1337
+    }
+    1 {
+      9 4242
+      2 f64 10190
+      7 'IW4x'
+    }
+    EOO
+
+  : duplicate-owned
+  :
+  : Test an entry with repeated game_id and game_extra_info fields.
+  :
+  $* '4242=10190:IW4x' <<EOI >>EOO
+    1 {
+      2 f64 1
+      9 4242
+      2 f64 2
+      7 'a'
+      7 'b'
+    }
+    EOI
+    1 {
+      9 4242
+      2 f64 10190
+      7 'IW4x'
+    }
+    EOO
+
+  : utf8
+  :
+  : Test a non-ASCII display name, 'IW4x: Modern Warfare 2 — Ünïcödé'
+  : (specified in hex).
+  :
+  $* '4242=10190/495734783a204d6f6465726e2057617266617265203220e2809420c39c6ec3af63c3b664c3a9' <<EOI >>EOO
+    1 {
+      9 4242
+    }
+    EOI
+    1 {
+      9 4242
+      2 f64 10190
+      7 'IW4x: Modern Warfare 2 — Ünïcödé'
+    }
+    EOO
+
+  : no-data-blob
+  :
+  $* '4242=10190:IW4x' <<EOI >>EOO
+    emsg 715
+    1 {
+      9 4242
+    }
+    EOI
+    1 {
+      9 4242
+      2 f64 10190
+      7 'IW4x'
+    }
+    EOO
+
+  : with-data-blob
+  :
+  $* '4242=10190:IW4x' <<EOI >>EOO
+    emsg 5410
+    1 {
+      9 4242
+    }
+    EOI
+    1 {
+      9 4242
+      2 f64 10190
+      7 'IW4x'
+    }
+    EOO
+}}
+
+: ignore
+: Test frames that are sent as is
+:
+{{
+  : unregistered
+  :
+  $* '4242=10190:IW4x' <<EOI == 1
+    1 {
+      9 1337
+    }
+    EOI
+
+  : zero-pid
+  :
+  : Make sure process id 0 is not looked up even if registered.
+  :
+  $* '0=10190:IW4x' <<EOI == 1
+    1 {
+      9 0
+    }
+    EOI
+
+  : other-emsg
+  :
+  $* '4242=10190:IW4x' <<EOI == 1
+    emsg 5501
+    1 {
+      9 4242
+    }
+    EOI
+
+  : plain
+  :
+  : Test a GamesPlayed message without the protobuf flag.
+  :
+  $* '4242=10190:IW4x' <<EOI == 1
+    emsg 742 plain
+    1 {
+      9 4242
+    }
+    EOI
+
+  : empty
+  :
+  $* '4242=10190:IW4x' <:'' == 1
+
+  : overflow
+  :
+  : Test a rewritten frame that exceeds the output capacity.
+  :
+  $* --capacity 16 '4242=10190:IW4x' <<EOI == 1
+    1 {
+      9 4242
+    }
+    EOI
+}}
+
+: malformed
+: Test malformed frames that are sent as is
+:
+{{
+  : truncated-body
+  :
+  $* '4242=10190:IW4x' <<EOI == 1
+    1 {
+      9 4242
+    }
+    x 0a05
+    EOI
+
+  : truncated-game
+  :
+  : Test a GamePlayed entry with a truncated field after the registered
+  : process_id.
+  :
+  $* '4242=10190:IW4x' <<EOI == 1
+    x 0a04 48 92 21 12
+    EOI
+
+  : process-list
+  :
+  $* '4242=10190:IW4x' <<EOI == 1
+    1 {
+      32 {
+        x ff
+      }
+    }
+    EOI
+
+  : group
+  :
+  $* '4242=10190:IW4x' <<EOI == 1
+    x 0b
+    EOI
+
+  : long-varint
+  :
+  $* '4242=10190:IW4x' <<EOI == 1
+    x 08ffffffffffffffffff02
+    EOI
+}}
