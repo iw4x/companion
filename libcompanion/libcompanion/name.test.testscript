@@ -1,0 +1,30 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+: windows
+: Test the Windows protocol object names
+:
+{{
+  $* record 4242 >'Local\IW4x.SteamPresence.4242'         : record
+  $* status 4242 >'Local\IW4x.SteamCompanion.4242'        : status
+  $* event  4242 >'Local\IW4x.SteamPresence.Changed.4242' : event
+
+  : longest
+  :
+  : Test the longest object name (the event name with the maximum key).
+  :
+  $* event 4294967295 >'Local\IW4x.SteamPresence.Changed.4294967295'
+}}
+
+: unix
+: Test the Linux protocol file paths
+:
+{{
+  $* unix-record 4242 >'/dev/shm/iw4x-presence.4242'         : record
+  $* unix-status 1000 >'/dev/shm/iw4x-steam-companion.1000'  : status
+  $* unix-status 0    >'/dev/shm/iw4x-steam-companion.0'     : root
+
+  : longest
+  :
+  $* unix-status 4294967295 >'/dev/shm/iw4x-steam-companion.4294967295'
+}}
