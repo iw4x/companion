@@ -1,0 +1,212 @@
+#! /usr/bin/env bash
+
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Restart the Linux Steam client with the companion module loaded.
+#
+# The Steam client only loads the module at startup (see
+# libcompanion/libcompanion/host-linux.cxx), so testing a module build
+# requires a client restart. This script shuts down the running client (if
+# any), starts it detached through the module's launcher (iw4x-steam), waits
+# for the companion to settle, and prints its diagnostics. The exit code is
+# 0 if the companion is active and 1 otherwise.
+#
+# --install <config>
+#
+#   Install from the build configuration <config> into the prefix before
+#   restarting. Specify both the i386 configuration (the module and the
+#   launcher) and the x86_64 configuration (the module's 64-bit stand-in).
+#   For example:
+#
+#   etc/private/steam-restart --install ../companion-gcc32 \
+#                             --install ../companion-gcc
+#
+# --prefix <dir>
+#
+#   Installation directory to run from ($HOME/.cache/iw4x-steam by default).
+#
+# --timeout <seconds>
+#
+#   Maximum time to wait for the client to exit and then for the companion
+#   to settle (120 by default). The script never kills the client and fails
+#   if it doesn't exit on its own.
+#
+# The arguments after -- are passed to Steam. The IW4X_STEAM environment
+# variable specifies the Steam command (steam by default), which is also
+# used for the shutdown.
+#
+usage="usage: $0 [<options>] [-- <steam-argument>...]"
+
+trap "{ exit 1; }" ERR
+set -o errtrace # Also trap in functions.
+set -o pipefail
+
+function info () { echo "$*" 1>&2; }
+function error () { info "$*"; exit 1; }
+
+configs=()
+prefix="$HOME/.cache/iw4x-steam"
+timeout=120
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --install)
+      shift
+      if [ -z "$1" -o ! -d "$1" ]; then
+        error "missing or invalid build configuration after --install"
+      fi
+      configs+=("$(realpath "$1")")
+      shift
+      ;;
+    --prefix)
+      shift
+      if [ -z "$1" ]; then
+        error "missing directory after --prefix"
+      fi
+      prefix="$(realpath -m "$1")"
+      shift
+      ;;
+    --timeout)
+      shift
+      if ! [[ "$1" =~ ^[1-9][0-9]*$ ]]; then
+        error "missing or invalid number of seconds after --timeout"
+      fi
+      timeout="$1"
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      error "$usage"
+      ;;
+  esac
+done
+
+steam="${IW4X_STEAM:-steam}"
+uid="$(id -u)"
+status="/dev/shm/iw4x-steam-companion.$uid"
+launcher="$prefix/bin/iw4x-steam"
+
+# The client writes its output (including the companion's diagnostics) to
+# its log file.
+#
+if [ -d "$HOME/.steam/steam/logs" ]; then
+  console="$HOME/.steam/steam/logs/console-linux.txt"
+else
+  console="$HOME/.local/share/Steam/logs/console-linux.txt"
+fi
+
+# Print the pids of the user's processes named steam. These include the
+# client as well as any steam script that is in the process of starting it.
+#
+function running ()
+{
+  pgrep -u "$uid" -x steam || true
+}
+
+# Return true if the process's executable is named steam (for example,
+# ubuntu12_32/steam). For a steam script the executable is the interpreter.
+#
+function client () # <pid>
+{
+  local e
+  e="$(readlink "/proc/$1/exe" 2>/dev/null || true)"
+  [ -n "$e" -a "$(basename "$e")" = steam ]
+}
+
+# Install the launcher, the module and its stand-in, and their legal
+# notices. The filter excludes the library (the module contains it) and the
+# development files.
+#
+for c in "${configs[@]}"; do
+  info "installing from $c into $prefix"
+  b -q install: "$c/libcompanion/"              \
+    config.install.root="$prefix"                 \
+    config.install.filter='lib/iw4x-steam/@true lib/@false include/@false'
+done
+
+if [ ! -x "$launcher" ]; then
+  error "no launcher in $prefix/bin (install with --install first)"
+fi
+
+# Shut down the running client.
+#
+if [ -n "$(running)" ]; then
+  info "shutting Steam down"
+  "$steam" -shutdown >/dev/null 2>&1 || true
+
+  for ((i = 0; i != timeout; ++i)); do
+    if [ -z "$(running)" ]; then
+      break
+    fi
+    sleep 1
+  done
+
+  if [ -n "$(running)" ]; then
+    error "Steam did not exit within $timeout seconds, exit it and try again"
+  fi
+fi
+
+# Start the client detached so that it outlives this script. The launcher's
+# output (its errors and the dynamic linker's warnings) goes to our log.
+#
+log="$prefix/steam-restart.log"
+offset="$(stat -c %s "$console" 2>/dev/null || echo 0)"
+
+info "starting Steam through $launcher"
+setsid "$launcher" "$@" >"$log" 2>&1 </dev/null &
+
+# Wait for the companion to settle (publish a state other than starting;
+# see libcompanion/libcompanion/protocol.hxx) in a running Steam client. A
+# client removes its status on exit and a crashed client leaves a stale
+# status, which refers to a process that has exited (or to an unrelated
+# process that reused its pid). So we also verify that the status pid is a
+# Steam client.
+#
+state=
+pid=
+for ((i = 0; i != timeout; ++i)); do
+  if grep -q "^iw4x-steam: error" "$log" 2>/dev/null; then
+    cat "$log" 1>&2
+    exit 1
+  fi
+
+  if [ -f "$status" ]; then
+    # The status consists of seven 32-bit fields: magic, version, size,
+    # state, build, hook, and the Steam client pid.
+    #
+    fields=($(od -An -tu4 -w28 "$status" 2>/dev/null || true))
+
+    if [ "${#fields[@]}" -eq 7 -a "${fields[3]}" != 0 ] &&
+       client "${fields[6]}"; then
+      state="${fields[3]}"
+      pid="${fields[6]}"
+      break
+    fi
+  fi
+
+  sleep 1
+done
+
+# Print the companion's diagnostics written since the client restart. If
+# the log is shorter than before, then the client started a new one and we
+# print all of it.
+#
+if [ -f "$console" ]; then
+  if [ "$(stat -c %s "$console")" -lt "$offset" ]; then
+    offset=0
+  fi
+
+  tail -c "+$((offset + 1))" "$console" | grep -F "[iw4x-steam]" 1>&2 || true
+fi
+
+case "$state" in
+  1) info "companion active in Steam process $pid";                 exit 0 ;;
+  2) info "companion inactive: unsupported Steam client build";     exit 1 ;;
+  3) info "companion failed to install its hook";                   exit 1 ;;
+  "") error "companion did not settle within $timeout seconds (see $log)" ;;
+  *) error "companion published an unknown state $state"                  ;;
+esac
