@@ -1,0 +1,96 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+: status
+: Test the Windows status round trip
+:
+{{
+  : starting
+  :
+  : Test the initial status that the companion publishes.
+  :
+  $* status 99 starting 0 <:'' >'valid starting 2 0 99'
+
+  : active
+  :
+  $* status 99 active 0x1234 <:'' >'valid active 2 4660 99'
+
+  : unsupported
+  :
+  $* status 99 unsupported 0 <:'' >'valid unsupported 2 0 99'
+
+  : failed
+  :
+  $* status 99 failed 0 <:'' >'valid failed 2 0 99'
+
+  : older-build
+  :
+  : Test a status from a different companion build, which is valid.
+  :
+  $* status 99 active 0 <'build 1' >'valid active 1 0 99'
+
+  : view
+  :
+  $* status 99 active 0 <'length 4096' >'valid active 2 0 99'
+
+  : truncated
+  :
+  $* status 99 active 0 <'length 23' >'truncated'
+
+  : magic
+  :
+  $* status 99 active 0 <'magic 0x54345749' >'magic'
+
+  : version
+  :
+  $* status 99 active 0 <'version 2' >'version'
+
+  : size
+  :
+  $* status 99 active 0 <'size 28' >'size'
+
+  : state
+  :
+  : Test an unknown state (as published by a newer companion).
+  :
+  $* status 99 active 0 <'state 4' >'state'
+}}
+
+: unix-status
+: Test the Linux status round trip
+:
+{{
+  : active
+  :
+  : Make sure the decoded Steam pid is taken from the status.
+  :
+  $* unix-status 4242 active 0x1234 <:'' >'valid active 2 4660 4242'
+
+  : steam
+  :
+  $* unix-status 4242 active 0 <'steam 7' >'valid active 2 0 7'
+
+  : truncated
+  :
+  $* unix-status 4242 active 0 <'length 27' >'truncated'
+
+  : long
+  :
+  $* unix-status 4242 active 0 <'length 29' >'truncated'
+
+  : magic
+  :
+  $* unix-status 4242 active 0 <'magic 0x53345749' >'magic'
+
+  : version
+  :
+  $* unix-status 4242 active 0 <'version 0' >'version'
+
+  : size
+  :
+  $* unix-status 4242 active 0 <'size 24' >'size'
+
+  : state
+  :
+  $* unix-status 4242 active 0 <'state 0xffffffff' >'state'
+}}
