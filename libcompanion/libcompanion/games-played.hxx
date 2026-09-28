@@ -14,11 +14,12 @@ namespace companion
   // GamesPlayed frame rewriting.
   //
   // Steam reports the running games to the CM server with the
-  // CMsgClientGamesPlayed message, one GamePlayed entry per game. The server
-  // shows a game to friends only if the account owns its app. So in each
-  // entry that refers to a registered game process we set game_id to the
-  // registered app id (an app that the account owns) and game_extra_info to
-  // the game's display name, which becomes the title friends see.
+  // CMsgClientGamesPlayed message, one GamePlayed entry per game, and the
+  // server shows each entry to friends as the game being played. In each
+  // entry that refers to a registered game process we set game_extra_info to
+  // the game's display name, which becomes the title friends see, and
+  // game_id to the registered app id. The server only shows an app that the
+  // account owns, which is why the game registers such an app.
   //
   // The rest of the frame is copied byte for byte.
   //
