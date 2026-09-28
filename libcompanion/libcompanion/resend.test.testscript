@@ -1,0 +1,162 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+: idle
+:
+: Test frames without a pending record change.
+:
+$* <<EOI >>EOO
+  rewrite report rewritten
+  report 1 7 0 report report
+  frame 1 7 100
+  frame 2 7 200
+  EOI
+  idle
+  idle
+  EOO
+
+: resent
+:
+: Test a resend triggered by a frame on another connection. Make sure the
+: report is resent on its own connection.
+:
+$* <<EOI >>EOO
+  report 1 7 0 report report
+  rewrite report rewritten
+  change
+  frame 2 7 100
+  frame 2 7 200
+  EOI
+  signalled
+  send 1 rewritten
+  resent
+  idle
+  EOO
+
+: pending
+:
+: Test a change signalled while another change is pending.
+:
+$* <<EOI >>EOO
+  change
+  change
+  EOI
+  signalled
+  pending
+  EOO
+
+: no-report
+:
+: Test a change that precedes the first report. Such a change is cleared
+: since the first report is rewritten when it is sent.
+:
+$* <<EOI >>EOO
+  change
+  frame 1 7 100
+  report 1 7 200 report report
+  frame 1 7 300
+  EOI
+  signalled
+  no-report
+  idle
+  EOO
+
+: other-thread
+:
+: Test a frame from another thread, which leaves the change pending until
+: the report's thread sends a frame.
+:
+$* <<EOI >>EOO
+  report 1 7 0 report report
+  rewrite report rewritten
+  change
+  frame 2 8 100
+  frame 1 7 200
+  EOI
+  signalled
+  other-thread
+  send 1 rewritten
+  resent
+  EOO
+
+: stale
+:
+: Test a report whose connection exceeded max_report_idle.
+:
+$* <<EOI >>EOO
+  report 1 7 0 report report
+  rewrite report rewritten
+  change
+  frame 2 7 60001
+  change
+  frame 2 7 60002
+  EOI
+  signalled
+  stale 60001
+  signalled
+  no-report
+  EOO
+
+: alive
+:
+: Make sure frames on the report's connection reset its idle time.
+:
+$* <<EOI >>EOO
+  report 1 7 0 report report
+  frame 1 7 50000
+  rewrite report rewritten
+  change
+  frame 2 7 100000
+  EOI
+  idle
+  signalled
+  send 1 rewritten
+  resent
+  EOO
+
+: no-match
+:
+$* <<EOI >>EOO
+  report 1 7 0 report report
+  rewrite report -
+  change
+  frame 1 7 100
+  EOI
+  signalled
+  no-match
+  EOO
+
+: unchanged
+:
+: Test a rewrite that equals the last sent frame.
+:
+$* <<EOI >>EOO
+  report 1 7 0 report rewritten
+  rewrite report rewritten
+  change
+  frame 1 7 100
+  EOI
+  signalled
+  unchanged
+  EOO
+
+: latest
+:
+: Make sure the most recent report is resent and the resent frame becomes
+: the last sent frame.
+:
+$* <<EOI >>EOO
+  report 1 7 0 old old
+  report 3 9 10 report report
+  rewrite report rewritten
+  change
+  frame 1 9 100
+  change
+  frame 1 9 200
+  EOI
+  signalled
+  send 3 rewritten
+  resent
+  signalled
+  unchanged
+  EOO
