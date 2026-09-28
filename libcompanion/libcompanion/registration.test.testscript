@@ -1,0 +1,209 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+: record
+: Test decoding of the Windows records
+:
+{{
+  : valid
+  :
+  $* record 4242 <:'' >"valid 10190 'IW4x'"
+
+  : app
+  :
+  : Test the fallback app id.
+  :
+  $* record 4242 <'app 480' >"valid 480 'IW4x'"
+
+  : unicode
+  :
+  : Test a non-ASCII display name. Note that it is passed via stdin, which
+  : preserves UTF-8 on all the platforms.
+  :
+  $* record 4242 <"info 'Ünïcödé 🎮'" >"valid 10190 'Ünïcödé 🎮'"
+
+  : longest
+  :
+  $* record 4242 <<EOI >>EOO
+    info 'abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    EOI
+    valid 10190 'abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+    EOO
+
+  : view
+  :
+  : Test a page-sized snapshot, as copied from a mapped view.
+  :
+  $* record 4242 <'length 4096' >"valid 10190 'IW4x'"
+
+  : truncated
+  :
+  $* record 4242 <'length 83' >'truncated'
+
+  : unpublished
+  :
+  : Test a record without the magic, which is what a reader observes while
+  : the game is publishing it.
+  :
+  $* record 4242 <'magic 0' >'magic'
+
+  : unix-magic
+  :
+  : Test a Linux record magic.
+  :
+  $* record 4242 <'magic 0x55345749' >'magic'
+
+  : version
+  :
+  $* record 4242 <'version 2' >'version'
+
+  : size
+  :
+  $* record 4242 <'size 83' >'size'
+
+  : process
+  :
+  : Test a record with a different process id.
+  :
+  $* record 4242 <'process 1337' >'process'
+
+  : app-zero
+  :
+  $* record 4242 <'app 0' >'app'
+
+  : app-wide
+  :
+  : Test an app id that exceeds 24 bits.
+  :
+  $* record 4242 <'app 0x1000000' >'app'
+
+  : unterminated
+  :
+  $* record 4242 <'info-fill a' >'extra-info'
+
+  : empty
+  :
+  $* record 4242 <"info ''" >'extra-info'
+
+  : control
+  :
+  $* record 4242 <"info 'a	b'" >'extra-info'
+
+  : del
+  :
+  $* record 4242 <'info-hex 617f' >'extra-info'
+
+  : c1-control
+  :
+  : Test the NEL (U+0085) C1 control character.
+  :
+  $* record 4242 <'info-hex 61c285' >'extra-info'
+
+  : overlong
+  :
+  : Test an overlong two-byte slash.
+  :
+  $* record 4242 <'info-hex c0af' >'extra-info'
+
+  : surrogate
+  :
+  : Test the U+D800 surrogate.
+  :
+  $* record 4242 <'info-hex eda080' >'extra-info'
+
+  : beyond-unicode
+  :
+  : Test U+110000, which is past the last code point.
+  :
+  $* record 4242 <'info-hex f4908080' >'extra-info'
+
+  : truncated-sequence
+  :
+  $* record 4242 <'info-hex 61e282' >'extra-info'
+
+  : stray-continuation
+  :
+  $* record 4242 <'info-hex 6180' >'extra-info'
+
+  : order
+  :
+  : Make sure the first failed check is reported.
+  :
+  $* record 4242 <<EOI >'version'
+    version 2
+    size 1
+    process 1
+    EOI
+}}
+
+: unix-record
+: Test decoding of the Linux records
+:
+{{
+  : valid
+  :
+  $* unix-record 4242 123456789 <:'' >"valid 10190 'IW4x'"
+
+  : start-high
+  :
+  : Test a start time with a non-zero high half.
+  :
+  $* unix-record 4242 0x100000001 <:'' >"valid 10190 'IW4x'"
+
+  : truncated
+  :
+  : Test a file that is shorter than the record.
+  :
+  $* unix-record 4242 1 <'length 91' >'truncated'
+
+  : long
+  :
+  : Test a file that is longer than the record.
+  :
+  $* unix-record 4242 1 <'length 93' >'truncated'
+
+  : windows-magic
+  :
+  $* unix-record 4242 1 <'magic 0x50345749' >'magic'
+
+  : version
+  :
+  $* unix-record 4242 1 <'version 2' >'version'
+
+  : size
+  :
+  $* unix-record 4242 1 <'size 84' >'size'
+
+  : process
+  :
+  $* unix-record 4242 1 <'process 1337' >'process'
+
+  : reused-pid
+  :
+  : Test a stale record with a start time of a different process.
+  :
+  $* unix-record 4242 200 <'start 100' >'start-time'
+
+  : reused-pid-high
+  :
+  $* unix-record 4242 1 <'start 0x100000001' >'start-time'
+
+  : app
+  :
+  $* unix-record 4242 1 <'app 0' >'app'
+
+  : unterminated
+  :
+  $* unix-record 4242 1 <'info-fill a' >'extra-info'
+}}
+
+: valid
+: Test valid_extra_info() directly
+:
+{{
+  $* --valid 'IW4x'               : ascii
+  $* --valid ''              == 1 : empty
+  $* --valid 'a	b'           == 1 : control
+  $* --valid 'abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'      : longest
+  $* --valid 'abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' == 1 : too-long
+}}
