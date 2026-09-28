@@ -1,0 +1,13 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+# glibc floor test (see glibc-linux.cxx). Print the module's dynamic symbols
+# with versions above GLIBC_2.36. The expected output is empty.
+#
+# Note that objdump is part of binutils, which the toolchain includes.
+#
+
+: floor
+:
+objdump -T $0 | \
+  sed -n -e 's/^(.*GLIBC_2\.(3[7-9]|[4-9][0-9]|[1-9][0-9]{2,}).*)$/\1/p'

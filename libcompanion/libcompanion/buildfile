@@ -134,6 +134,10 @@ if $windows
 #
 libs{iw4x-steam}: file{iw4x-steam.map}: include = adhoc
 
+# Verify the module's glibc symbol versions (see glibc-linux.cxx).
+#
+libs{iw4x-steam}: testscript{glibc-linux}
+
 if ($linux && $i386)
 {
   libs{iw4x-steam}:
@@ -166,7 +170,14 @@ objs{*-win32}: cxx.poptions += "-I$src_root/minhook/include"
 # is compiled with hidden visibility. On i386 this makes calls and data
 # references to its own symbols bypass the GOT and the PLT.
 #
-objs{*-linux}: cxx.coptions += -fvisibility=hidden
+# The module's code also includes glibc-linux.hxx, which binds its glibc
+# references to the versions available in glibc 2.36 (see glibc-linux.cxx).
+#
+objs{*-linux}:
+{
+  cxx.poptions += -include "$src_base/glibc-linux.hxx"
+  cxx.coptions += -fvisibility=hidden
+}
 
 # The detour builder includes <hde32.h>, which includes <windows.h> for its
 # integer types. Here <windows.h> is always the stand-in (see
