@@ -19,6 +19,11 @@ cxx{*}: extension = cxx
 #
 using c
 
+# The in module generates the Linux companion module's launcher (see
+# libcompanion/buildfile).
+#
+using in
+
 # The test target for cross-testing (running tests under Wine, etc).
 #
 test.target = $cxx.target

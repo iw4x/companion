@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Start the Steam client with the IW4x companion module preloaded. With the
+# module loaded, friends see IW4x while the game runs under Proton (see
+# host-linux.cxx).
+#
+# Usage: iw4x-steam [<steam-argument>...]
+#
+# The module is only loaded at the client startup, so the client must not
+# already be running (in which case steam would forward the arguments to
+# it). The IW4X_STEAM environment variable specifies the Steam command
+# (steam by default).
+#
+# The module is preloaded from a directory named after $PLATFORM, which the
+# dynamic linker expands separately in each process. In the Steam client it
+# expands to i686, which contains the module. In the 64-bit programs that
+# start the client it expands to a 64-bit platform, which contains an empty
+# stand-in (see stub-linux.c).
+#
+owd="$(dirname "$(readlink -f "$0")")"
+dir="$owd/@module_dir@"
+
+if [ ! -f "$dir/i686/libiw4x-steam.so" ]; then
+  echo "iw4x-steam: error: no module in $dir/i686" 1>&2
+  exit 1
+fi
+
+if pgrep -u "$(id -u)" -x steam >/dev/null 2>&1; then
+  echo "iw4x-steam: error: Steam is already running" 1>&2
+  echo "  info: exit it and run iw4x-steam again for the module to load" 1>&2
+  exit 1
+fi
+
+# Note: the dynamic linker expands $PLATFORM, so it is escaped here.
+#
+LD_PRELOAD="$dir/\$PLATFORM/libiw4x-steam.so${LD_PRELOAD:+ $LD_PRELOAD}"
+export LD_PRELOAD
+
+exec "${IW4X_STEAM:-steam}" "$@@"

@@ -108,6 +108,21 @@ for p: x86_64 haswell xeon_phi
   }
 }
 
+# Launcher that is installed with the module. It locates the module
+# relative to its own installation location, so it is only built when
+# installing.
+#
+./: exe{iw4x-steam}: include = ($linux && $i386 && $install.root != [null])
+
+exe{iw4x-steam}: in{iw4x-steam}
+{
+  in.symbol = '@'
+}
+
+ifn! $install.root
+  exe{iw4x-steam}: module_dir = \
+    $install.resolve($install.lib, $install.bin)iw4x-steam
+
 # The modules are only loaded, never linked, so we install the libraries
 # without the development files (import library and pkg-config files).
 #
