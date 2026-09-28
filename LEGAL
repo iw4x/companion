@@ -25,6 +25,11 @@ libcompanion/libcompanion/minhook/
             decoder for the matching architecture) and reads its operands
             with memcpy(). Its behavior is otherwise unchanged.
 
+            Fixes in the hooking engine:
+
+            - mh_executable_address() no longer reads an uninitialized
+              result if VirtualQuery() fails.
+
             The targets are declared in libcompanion/libcompanion/buildfile.
 
   Exception: this is a bundled dependency, contrary to the "no bundled

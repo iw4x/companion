@@ -328,7 +328,8 @@ bool
 mh_executable_address (const void* address)
 {
   MEMORY_BASIC_INFORMATION i;
-  VirtualQuery (address, &i, sizeof (i));
+  if (VirtualQuery (address, &i, sizeof (i)) == 0)
+    return false;
 
   return i.State == MEM_COMMIT && (i.Protect & PAGE_EXECUTE_FLAGS) != 0;
 }
