@@ -101,7 +101,7 @@ for p: x86_64 haswell xeon_phi
 {
   ./: $p/libs{iw4x-steam}: include = ($linux && $x86_64)
 
-  $p/libs{iw4x-steam}: c{stub-linux}
+  $p/libs{iw4x-steam}: c{stub-linux} fsdir{$p/}
   {
     bin.lib.suffix = ''
     install        = lib/iw4x-steam/$p/
