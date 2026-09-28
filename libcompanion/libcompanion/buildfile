@@ -7,19 +7,12 @@ impl_libs = # Implementation dependencies.
 # Vendored MinHook (see LEGAL).
 #
 # We build two utility libraries from it. The first is HDE, MinHook's
-# instruction length decoder, which the library uses on every target (see
-# detour.hxx). The second is the rest of MinHook, the hooking engine of the
-# Windows module.
+# instruction length decoder, which is portable and built for every target.
+# The library uses its i386 decoder to decode the Linux Steam client's code
+# on any host (see detour.hxx). The second is the rest of MinHook, the
+# hooking engine of the Windows module.
 #
-# Upstream compiles each HDE decoder only for the matching architecture
-# since MinHook decodes the code of its own process. The library decodes
-# i386 code on every host, so hde32-portable.c builds the i386 decoder for
-# every target. It includes hde32.c, which is therefore not compiled on its
-# own.
-#
-libul{hde}: minhook/c{hde32-portable hde64} \
-  minhook/h{hde32 hde64 pstdint table32 table64 windows}
-libul{hde}: minhook/c{hde32}: include = adhoc
+libul{hde}: minhook/{h c}{hde32 hde64} minhook/h{table32 table64}
 
 # Note that libul{minhook} depends on HDE without listing it. Its only user,
 # the Windows module, also links libul{companion}, which lists HDE. A utility
@@ -168,6 +161,7 @@ if ($linux && $i386)
 # Build options.
 #
 cxx.poptions =+ "-I$out_root" "-I$src_root"
+c.poptions   =+ "-I$src_root"
 
 obja{*}: cxx.poptions += -DLIBCOMPANION_STATIC_BUILD
 objs{*}: cxx.poptions += -DLIBCOMPANION_SHARED_BUILD
@@ -184,19 +178,6 @@ objs{*-linux}:
   cxx.poptions += -include "$src_base/glibc-linux.hxx"
   cxx.coptions += -fvisibility=hidden
 }
-
-# HDE includes <windows.h> for its integer types only. So the HDE objects
-# and the detour builder, which includes <hde32.h>, are compiled against the
-# stand-in on every target, including Windows (see minhook/windows.h). The
-# rest of MinHook and the Windows module use the real <windows.h>.
-#
-# Note: the detour builder's options are set on the group members since a
-# value on obj{detour} would be found before the obja{*} and objs{*} appends
-# above and hide them.
-#
-minhook/obj{hde32-portable hde64}: c.poptions =+ "-I$src_base/minhook"
-
-{obja objs obje}{detour}: cxx.poptions =+ "-I$src_base/minhook"
 
 # Export options.
 #

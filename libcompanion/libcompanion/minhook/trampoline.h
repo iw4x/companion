@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  MinHook - The Minimalistic API Hooking Library for x64/x86
  *  Copyright (C) 2009-2017 Tsuda Kageyu.
  *  All rights reserved.
@@ -28,78 +28,105 @@
 
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
+
+/* Encodings of the x86 and x64 branch instructions that the trampolines
+ * and the hooks are made of.
+ */
 #pragma pack(push, 1)
 
-// Structs for writing x86/x64 instructions.
-
-// 8-bit relative jump.
-typedef struct _JMP_REL_SHORT
+/* EB xx: jmp +2+xx
+ */
+struct mh_jmp_rel_short
 {
-    UINT8  opcode;      // EB xx: JMP +2+xx
-    UINT8  operand;
-} JMP_REL_SHORT, *PJMP_REL_SHORT;
+  uint8_t opcode;
+  uint8_t operand;
+};
 
-// 32-bit direct relative jump/call.
-typedef struct _JMP_REL
+/* E9 xxxxxxxx: jmp +5+xxxxxxxx
+ * E8 xxxxxxxx: call +5+xxxxxxxx
+ */
+struct mh_jmp_rel
 {
-    UINT8  opcode;      // E9/E8 xxxxxxxx: JMP/CALL +5+xxxxxxxx
-    UINT32 operand;     // Relative destination address
-} JMP_REL, *PJMP_REL, CALL_REL;
+  uint8_t  opcode;
+  uint32_t operand; /* Relative destination address. */
+};
 
-// 64-bit indirect absolute jump.
-typedef struct _JMP_ABS
+/* FF25 00000000: jmp [+6]
+ */
+struct mh_jmp_abs
 {
-    UINT8  opcode0;     // FF25 00000000: JMP [+6]
-    UINT8  opcode1;
-    UINT32 dummy;
-    UINT64 address;     // Absolute destination address
-} JMP_ABS, *PJMP_ABS;
+  uint8_t  opcode0;
+  uint8_t  opcode1;
+  uint32_t dummy;
+  uint64_t address; /* Absolute destination address. */
+};
 
-// 64-bit indirect absolute call.
-typedef struct _CALL_ABS
+/* FF15 00000002: call [+6]
+ * EB 08:         jmp +10
+ */
+struct mh_call_abs
 {
-    UINT8  opcode0;     // FF15 00000002: CALL [+6]
-    UINT8  opcode1;
-    UINT32 dummy0;
-    UINT8  dummy1;      // EB 08:         JMP +10
-    UINT8  dummy2;
-    UINT64 address;     // Absolute destination address
-} CALL_ABS;
+  uint8_t  opcode0;
+  uint8_t  opcode1;
+  uint32_t dummy0;
+  uint8_t  dummy1;
+  uint8_t  dummy2;
+  uint64_t address; /* Absolute destination address. */
+};
 
-// 32-bit direct relative conditional jumps.
-typedef struct _JCC_REL
+/* 0F8* xxxxxxxx: j* +6+xxxxxxxx
+ */
+struct mh_jcc_rel
 {
-    UINT8  opcode0;     // 0F8* xxxxxxxx: J** +6+xxxxxxxx
-    UINT8  opcode1;
-    UINT32 operand;     // Relative destination address
-} JCC_REL;
+  uint8_t  opcode0;
+  uint8_t  opcode1;
+  uint32_t operand; /* Relative destination address. */
+};
 
-// 64bit indirect absolute conditional jumps that x64 lacks.
-typedef struct _JCC_ABS
+/* 7* 0E:         j* +16
+ * FF25 00000000: jmp [+6]
+ *
+ * An absolute conditional jump, which x64 lacks.
+ */
+struct mh_jcc_abs
 {
-    UINT8  opcode;      // 7* 0E:         J** +16
-    UINT8  dummy0;
-    UINT8  dummy1;      // FF25 00000000: JMP [+6]
-    UINT8  dummy2;
-    UINT32 dummy3;
-    UINT64 address;     // Absolute destination address
-} JCC_ABS;
+  uint8_t  opcode;
+  uint8_t  dummy0;
+  uint8_t  dummy1;
+  uint8_t  dummy2;
+  uint32_t dummy3;
+  uint64_t address; /* Absolute destination address. */
+};
 
 #pragma pack(pop)
 
-typedef struct _TRAMPOLINE
+/* Trampoline description.
+ *
+ * The trampoline executes the target function's instructions that the hook
+ * overwrites and jumps to the rest of the target function. The instruction
+ * boundaries map the instructions between the two functions so that the
+ * threads suspended within them can be moved.
+ */
+struct mh_trampoline
 {
-    LPVOID pTarget;         // [In] Address of the target function.
-    LPVOID pDetour;         // [In] Address of the detour function.
-    LPVOID pTrampoline;     // [In] Buffer address for the trampoline and relay function.
+  void* target;     /* [in] Target function. */
+  void* detour;     /* [in] Detour function. */
+  void* trampoline; /* [in] Buffer for the trampoline and the relay. */
 
 #if defined(_M_X64) || defined(__x86_64__)
-    LPVOID pRelay;          // [Out] Address of the relay function.
+  void* relay;      /* [out] Relay function that jumps to the detour. */
 #endif
-    BOOL   patchAbove;      // [Out] Should use the hot patch area?
-    UINT   nIP;             // [Out] Number of the instruction boundaries.
-    UINT8  oldIPs[8];       // [Out] Instruction boundaries of the target function.
-    UINT8  newIPs[8];       // [Out] Instruction boundaries of the trampoline function.
-} TRAMPOLINE, *PTRAMPOLINE;
 
-BOOL CreateTrampolineFunction(PTRAMPOLINE ct);
+  bool    patch_above; /* [out] Patch the hot patch area. */
+  uint8_t ip_count;    /* [out] Number of instruction boundaries. */
+  uint8_t old_ips[8];  /* [out] Boundaries in the target function. */
+  uint8_t new_ips[8];  /* [out] Boundaries in the trampoline. */
+};
+
+/* Build the trampoline for the target function. Return false if the
+ * function cannot be hooked.
+ */
+bool
+mh_create_trampoline (struct mh_trampoline*);

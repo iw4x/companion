@@ -21,6 +21,4 @@
 # Third-party files retain their own notices and are exempt from our SPDX
 # header (see LEGAL).
 #
-libcompanion/libcompanion/minhook/*                  -spdx
-libcompanion/libcompanion/minhook/windows.h         !spdx
-libcompanion/libcompanion/minhook/hde32-portable.c  !spdx
+libcompanion/libcompanion/minhook/* -spdx

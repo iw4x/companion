@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  MinHook - The Minimalistic API Hooking Library for x64/x86
  *  Copyright (C) 2009-2017 Tsuda Kageyu.
  *  All rights reserved.
@@ -28,15 +28,39 @@
 
 #pragma once
 
-// Size of each memory slot.
+#include <stdbool.h>
+
+/* Executable memory slots for trampolines.
+ *
+ * On x64 each slot is allocated within 1024MB of its origin (normally the
+ * hooked function) so that the relative jumps between the two can reach.
+ */
+
+/* Size of a slot.
+ */
 #if defined(_M_X64) || defined(__x86_64__)
-    #define MEMORY_SLOT_SIZE 64
+#  define MH_MEMORY_SLOT_SIZE 64
 #else
-    #define MEMORY_SLOT_SIZE 32
+#  define MH_MEMORY_SLOT_SIZE 32
 #endif
 
-VOID   InitializeBuffer(VOID);
-VOID   UninitializeBuffer(VOID);
-LPVOID AllocateBuffer(LPVOID pOrigin);
-VOID   FreeBuffer(LPVOID pBuffer);
-BOOL   IsExecutableAddress(LPVOID pAddress);
+void
+mh_initialize_buffer (void);
+
+/* Release all the memory, including the slots in use.
+ */
+void
+mh_uninitialize_buffer (void);
+
+/* Return a slot near the origin or NULL if unable to allocate one.
+ */
+void*
+mh_allocate_buffer (void* origin);
+
+void
+mh_free_buffer (void* buffer);
+
+/* Return true if the address is in committed executable memory.
+ */
+bool
+mh_executable_address (const void* address);

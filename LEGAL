@@ -14,12 +14,18 @@ libcompanion/libcompanion/minhook/
             and the authors are reproduced below.
   Imported: include/MinHook.h, src/, and src/hde/, flattened into the
             above directory, with MinHook.h renamed to minhook.h and hook.c
-            to minhook.c. Upstream's build files, LICENSE.txt, and
-            AUTHORS.txt were left out.
-  Changes:  The include directives of minhook.c and trampoline.c were
-            adjusted to the flattened layout. Our additions are windows.h and
-            hde32-portable.c, and the targets are declared in
-            libcompanion/libcompanion/buildfile.
+            to minhook.c. Upstream's build files, LICENSE.txt, AUTHORS.txt,
+            and src/hde/pstdint.h were left out.
+  Changes:  The code was rewritten in the style of this project: the API is
+            mh_*() (for example, mh_create_hook() for MH_CreateHook()), the
+            HDE instruction types are struct hde32_instruction and struct
+            hde64_instruction, the HDE flags are HDE32_F_* and HDE64_F_*,
+            and the Win32 type aliases are replaced with the standard C
+            types. HDE is built for every target (upstream only builds the
+            decoder for the matching architecture) and reads its operands
+            with memcpy(). Its behavior is otherwise unchanged.
+
+            The targets are declared in libcompanion/libcompanion/buildfile.
 
   Exception: this is a bundled dependency, contrary to the "no bundled
   dependencies" rule (charter 2.2, rule 3; [PKG] 3.5), and it was granted as
@@ -37,9 +43,9 @@ libcompanion/libcompanion/minhook/
   the companion is built for. The vendored copy is then deleted and replaced
   with a depends: value.
 
-  Updating: replace the imported files with those of a newer upstream tag,
-  redo the above changes, keep our additions, and update the version above
-  as well as the license and the authors below.
+  Updating: port the upstream changes since the version above into the
+  rewritten code, then update the version as well as the license and the
+  authors below.
 
   MinHook license (LICENSE.txt):
 

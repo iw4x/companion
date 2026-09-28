@@ -5,7 +5,7 @@
 
 #include <cstring> // memcpy(), memset()
 
-#include <hde32.h>
+#include <libcompanion/minhook/hde32.h>
 
 #include <libcompanion/endian.hxx>
 #include <libcompanion/contract.hxx>
@@ -54,9 +54,9 @@ namespace companion
   // of the otherwise undecodable functions decodable.
   //
   static bool
-  ud2 (const hde32s& h) noexcept
+  ud2 (const hde32_instruction& h) noexcept
   {
-    return h.flags == (F_ERROR | F_ERROR_OPCODE) &&
+    return h.flags == (HDE32_F_ERROR | HDE32_F_ERROR_OPCODE) &&
            h.opcode == 0x0F &&
            h.opcode2 == 0x0B;
   }
@@ -70,7 +70,7 @@ namespace companion
           const elf_segment& s,
           uint32_t a,
           uint32_t e,
-          hde32s& h) noexcept
+          hde32_instruction& h) noexcept
   {
     LIBCOMPANION_PRE (a >= s.address && a < e && e - s.address <= s.size);
 
@@ -92,7 +92,7 @@ namespace companion
 
     hde32_disasm (p, &h);
 
-    return ((h.flags & F_ERROR) == 0 || ud2 (h)) && h.len <= e - a;
+    return ((h.flags & HDE32_F_ERROR) == 0 || ud2 (h)) && h.len <= e - a;
   }
 
   // Return true if the instruction may transfer control to somewhere other
@@ -101,9 +101,9 @@ namespace companion
   // exception).
   //
   static bool
-  transfer (const hde32s& h) noexcept
+  transfer (const hde32_instruction& h) noexcept
   {
-    if ((h.flags & F_RELATIVE) != 0)
+    if ((h.flags & HDE32_F_RELATIVE) != 0)
       return true;
 
     if (h.opcode == 0x0F)
@@ -145,17 +145,17 @@ namespace companion
   // Calculate the process address that the direct branch at a jumps to.
   //
   static i386_address
-  branch_target (const hde32s& h, i386_address a) noexcept
+  branch_target (const hde32_instruction& h, i386_address a) noexcept
   {
-    LIBCOMPANION_PRE ((h.flags & F_RELATIVE) != 0);
+    LIBCOMPANION_PRE ((h.flags & HDE32_F_RELATIVE) != 0);
 
     // Displacement sign-extended to 32 bits.
     //
     uint32_t d;
 
-    if ((h.flags & F_IMM32) != 0)
+    if ((h.flags & HDE32_F_IMM32) != 0)
       d = h.imm.imm32;
-    else if ((h.flags & F_IMM16) != 0)
+    else if ((h.flags & HDE32_F_IMM16) != 0)
       d = static_cast<uint32_t> (static_cast<int16_t> (h.imm.imm16));
     else
       d = static_cast<uint32_t> (static_cast<int8_t> (h.imm.imm8));
@@ -180,7 +180,7 @@ namespace companion
   //
   static bool
   relocate_call (const elf_image& x,
-                 const hde32s& h,
+                 const hde32_instruction& h,
                  uint32_t a,
                  i386_address base,
                  uint8_t* p) noexcept
@@ -219,8 +219,8 @@ namespace companion
 
     while (n < jump_size)
     {
-      uint32_t a (f.address + n);
-      hde32s   h;
+      uint32_t          a (f.address + n);
+      hde32_instruction h;
 
       if (!decode (x, s, a, e, h))
         return detour_outcome::decode;
@@ -266,12 +266,12 @@ namespace companion
     //
     for (uint32_t a (f.address + n); a != e; )
     {
-      hde32s h;
+      hde32_instruction h;
 
       if (!decode (x, s, a, e, h))
         return detour_outcome::decode;
 
-      if ((h.flags & F_RELATIVE) != 0)
+      if ((h.flags & HDE32_F_RELATIVE) != 0)
       {
         // Offset from the function start modulo 2^32. A target before the
         // start wraps to a large value.

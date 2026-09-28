@@ -3,7 +3,7 @@
 
 #include <libcompanion/hook-win32.hxx>
 
-#include <libcompanion/utility-win32.hxx> // Must precede minhook.h.
+#include <libcompanion/utility-win32.hxx>
 
 #include <libcompanion/minhook/minhook.h>
 
@@ -90,20 +90,20 @@ namespace companion
   {
     LIBCOMPANION_PRE (t != nullptr);
 
-    MH_STATUS s (MH_Initialize ());
+    mh_status s (mh_initialize ());
 
     if (s != MH_OK && s != MH_ERROR_ALREADY_INITIALIZED)
     {
-      diag ("unable to initialize MinHook: {}", MH_StatusToString (s));
+      diag ("unable to initialize MinHook: {}", mh_status_to_string (s));
       return false;
     }
 
     void* o;
-    s = MH_CreateHook (t, reinterpret_cast<void*> (&detour), &o);
+    s = mh_create_hook (t, reinterpret_cast<void*> (&detour), &o);
 
     if (s != MH_OK)
     {
-      diag ("unable to create the send hook: {}", MH_StatusToString (s));
+      diag ("unable to create the send hook: {}", mh_status_to_string (s));
       return false;
     }
 
@@ -112,12 +112,12 @@ namespace companion
     //
     original_function = reinterpret_cast<send_frame_function> (o);
 
-    s = MH_EnableHook (t);
+    s = mh_enable_hook (t);
 
     if (s != MH_OK)
     {
-      diag ("unable to enable the send hook: {}", MH_StatusToString (s));
-      MH_RemoveHook (t);
+      diag ("unable to enable the send hook: {}", mh_status_to_string (s));
+      mh_remove_hook (t);
       return false;
     }
 
