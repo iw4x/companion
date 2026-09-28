@@ -6,15 +6,15 @@
 
 /* Stand-in <windows.h> for compiling MinHook's instruction decoder (HDE).
  *
- * HDE is portable. It only depends on Windows through src/hde/pstdint.h,
- * which includes <windows.h> for the fixed-width integer types and then
- * typedefs them back to their <stdint.h> names. So this header defines
- * exactly these types under the names that pstdint.h expects. Any other use
- * of <windows.h> fails to compile.
+ * HDE is portable. It only depends on Windows through pstdint.h, which
+ * includes <windows.h> for the fixed-width integer types and then typedefs
+ * them back to their <stdint.h> names. So this header defines exactly these
+ * types under the names that pstdint.h expects. Any other use of
+ * <windows.h> fails to compile.
  *
  * Note that this directory is only on the include path of the HDE objects
- * and of the detour builder (see minhook/buildfile and
- * libcompanion/buildfile).
+ * and of the detour builder, so the rest of MinHook and the Windows module
+ * use the real <windows.h> (see ../buildfile).
  */
 
 #include <stdint.h>

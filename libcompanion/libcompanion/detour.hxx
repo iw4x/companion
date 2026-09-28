@@ -44,7 +44,7 @@ namespace companion
   // the cold part of this one) are not checked since we assume compilers
   // don't generate such branches into a prologue.
   //
-  // Instructions are decoded with HDE (see ../minhook/hde32.c). Anything
+  // Instructions are decoded with HDE (see minhook/hde32.c). Anything
   // that HDE or this code does not fully understand is refused.
   //
 

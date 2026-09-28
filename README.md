@@ -132,7 +132,8 @@ See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md).
 ## License
 
 `companion` is licensed under the GNU General Public License, version 3
-(GPL-3.0-only). MinHook, vendored under `upstream/minhook/`, is licensed
-under the BSD 2-Clause License.
+(GPL-3.0-only). MinHook, vendored under
+`libcompanion/libcompanion/minhook/`, is licensed under the BSD 2-Clause
+License.
 
 See [`LICENSE.md`](LICENSE.md), [`LEGAL`](LEGAL), and [`AUTHORS`](AUTHORS).

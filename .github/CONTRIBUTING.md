@@ -97,8 +97,9 @@ is merged.
 
 By contributing to `companion`, you agree that your contribution is
 licensed under its license, the GNU General Public License, version 3 (see
-`LICENSE.md`). MinHook, vendored under `upstream/minhook/`, keeps its own
-BSD 2-Clause License (see `LEGAL`), and changes to it are made upstream.
+`LICENSE.md`). MinHook, vendored under
+`libcompanion/libcompanion/minhook/`, keeps its own BSD 2-Clause License
+(see `LEGAL`), and changes to it are made upstream.
 
 Only contribute work that you have the right to license this way. If a
 change includes code from elsewhere, say so in the pull request, together

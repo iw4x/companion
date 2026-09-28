@@ -4,16 +4,16 @@
 
 /* HDE i386 decoder built for any target.
  *
- * Upstream compiles src/hde/hde32.c only for i386 since MinHook decodes the
- * code of its own process. We decode the i386 code of the Linux Steam client
- * in libcompanion, which is platform-independent and tested on any host,
- * including x86_64 (see detour.hxx). The decoder is portable C that only
+ * Upstream compiles hde32.c only for i386 since MinHook decodes the code of
+ * its own process. We decode the i386 code of the Linux Steam client in
+ * libcompanion, which is platform-independent and tested on any host,
+ * including x86_64 (see ../detour.hxx). The decoder is portable C that only
  * reads bytes, so we compile it unchanged and satisfy its architecture
  * check by defining the macro it tests.
  *
  * The standard headers it uses are included first so that the macro cannot
  * affect their declarations. For the same reason it always uses the
- * <windows.h> stand-in (see the buildfile).
+ * <windows.h> stand-in (see windows.h).
  */
 
 #include <string.h>
@@ -23,4 +23,4 @@
 #  define _M_IX86
 #endif
 
-#include "src/hde/hde32.c"
+#include "hde32.c"

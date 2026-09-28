@@ -3,9 +3,9 @@
 
 #include <libcompanion/hook-win32.hxx>
 
-#include <libcompanion/utility-win32.hxx> // Must precede <MinHook.h>.
+#include <libcompanion/utility-win32.hxx> // Must precede minhook.h.
 
-#include <MinHook.h>
+#include <libcompanion/minhook/minhook.h>
 
 #include <cstdint>
 #include <cstddef>     // offsetof
