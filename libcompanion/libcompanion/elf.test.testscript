@@ -1,0 +1,518 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Each image has a code segment at 1000 and a data segment at 2000. With
+# these segments the program headers are at 34 (headers), 54 (code), 74
+# (data), 94 (unwind), and b4 (PT_GNU_EH_FRAME) and .eh_frame_hdr is at 3000
+# (see elf.test.hxx for the layout).
+#
+# For a single function .eh_frame starts at 3014 and contains the "zR" CIE
+# (3014), the "zPLR" CIE (3028), and the FDE (3044).
+#
++cat <<EOI >=image
+  segment rx 1000 1000
+  segment r 2000 100
+  EOI
+
+: valid
+:
+cat ../image - <<EOI | $* 1000 1010 >>EOO
+  function 1000 1200
+  EOI
+  valid 305c
+  1000 200
+  1000 200
+  EOO
+
+: function
+:
+{{
+  : begin
+  :
+  cat ../../image - <<EOI | $* fff 1000 >>EOO
+    function 1000 1200
+    EOI
+    valid 305c
+    0 0
+    1000 200
+    EOO
+
+  : end
+  :
+  : Test an address at the function end.
+  :
+  cat ../../image - <<EOI | $* 11ff 1200 >>EOO
+    function 1000 1200
+    EOI
+    valid 305c
+    1000 200
+    0 0
+    EOO
+
+  : gap
+  :
+  : Test an address in the gap between two functions.
+  :
+  cat ../../image - <<EOI | $* 10ff 1100 11ff 1200 >>EOO
+    function 1200 1300
+    function 1000 1100
+    EOI
+    valid 3078
+    1000 100
+    0 0
+    0 0
+    1200 100
+    EOO
+
+  : many
+  :
+  cat ../../image - <<EOI | $* 1000 1180 1234 1fff >>EOO
+    function 1000 1100
+    function 1100 1200
+    function 1200 1300
+    function 1300 1400
+    function 1400 2000
+    EOI
+    valid 30cc
+    1000 100
+    1100 100
+    1200 100
+    1400 c00
+    EOO
+
+  : personality
+  :
+  : Test a CIE with a personality routine pointer.
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200 personality
+    EOI
+    valid 3060
+    1000 200
+    EOO
+
+  : none
+  :
+  cat ../../image | $* 1000 >>EOO
+    valid 3040
+    0 0
+    EOO
+}}
+
+: frame
+:
+: Test FDEs and CIEs that we don't recognize, which make the function
+: unknown.
+:
+{{
+  : cie-version-3
+  :
+  : Test a version 3 CIE, which stores the return address register as
+  : ULEB128.
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200
+    byte 301c 03
+    EOI
+    valid 305c
+    1000 200
+    EOO
+
+  : cie-version
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200
+    byte 301c 02
+    EOI
+    valid 305c
+    0 0
+    EOO
+
+  : augmentation
+  :
+  : Test an augmentation string without 'z' (absolute FDE pointers).
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200
+    byte 301d 79
+    EOI
+    valid 305c
+    0 0
+    EOO
+
+  : augmentation-unknown
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200
+    byte 301e 58
+    EOI
+    valid 305c
+    0 0
+    EOO
+
+  : absolute
+  :
+  : Test absolute (udata4) FDE pointers.
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200
+    byte 3024 03
+    EOI
+    valid 305c
+    0 0
+    EOO
+
+  : personality-encoding
+  :
+  : Test a LEB128 personality routine pointer encoding, which we don't
+  : support.
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200 personality
+    byte 303a 01
+    EOI
+    valid 3060
+    0 0
+    EOO
+
+  : begin
+  :
+  : Test an FDE start that doesn't match the search table entry.
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200
+    byte 304c 00
+    EOI
+    valid 305c
+    0 0
+    EOO
+
+  : length
+  :
+  : Test the 64-bit format length.
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200
+    byte 3044 ff ff ff ff
+    EOI
+    valid 305c
+    0 0
+    EOO
+
+  : cie
+  :
+  : Test a zero CIE pointer, which identifies a CIE.
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200
+    byte 3048 00 00 00 00
+    EOI
+    valid 305c
+    0 0
+    EOO
+
+  : cie-outside
+  :
+  : Test a CIE pointer that targets an address before the image.
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200
+    byte 3048 00 00 01 00
+    EOI
+    valid 305c
+    0 0
+    EOO
+
+  : fde-outside
+  :
+  : Test a search table FDE address outside the readable segments.
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200
+    byte 3010 00 f8 ff ff
+    EOI
+    valid 305c
+    0 0
+    EOO
+}}
+
+: unwind
+:
+{{
+  : none
+  :
+  : Test an image without PT_GNU_EH_FRAME, which has no functions.
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200
+    byte b4 00 00 00 00
+    EOI
+    valid 305c
+    0 0
+    EOO
+
+  : omitted
+  :
+  : Test a header without the search table, which has no functions.
+  :
+  cat ../../image - <<EOI | $* 1010 >>EOO
+    function 1000 1200
+    byte 3003 ff
+    EOI
+    valid 305c
+    0 0
+    EOO
+
+  : version
+  :
+  cat ../../image - <<EOI | $* >'encoding 305c'
+    function 1000 1200
+    byte 3000 02
+    EOI
+
+  : frame-encoding
+  :
+  : Test a LEB128 .eh_frame pointer encoding, which we don't support.
+  :
+  cat ../../image - <<EOI | $* >'encoding 305c'
+    function 1000 1200
+    byte 3001 01
+    EOI
+
+  : count-encoding
+  :
+  cat ../../image - <<EOI | $* >'encoding 305c'
+    function 1000 1200
+    byte 3002 04
+    EOI
+
+  : table-encoding
+  :
+  cat ../../image - <<EOI | $* >'encoding 305c'
+    function 1000 1200
+    byte 3003 1b
+    EOI
+
+  : count
+  :
+  : Test an entry count that exceeds the header size.
+  :
+  cat ../../image - <<EOI | $* >'functions 305c'
+    function 1000 1200
+    byte 3008 02
+    EOI
+
+  : outside
+  :
+  : Test a header in the gap between segments.
+  :
+  cat ../../image - <<EOI | $* >'functions 305c'
+    function 1000 1200
+    byte bc 00 28 00 00
+    EOI
+
+  : short
+  :
+  : Test a header that is smaller than its fields.
+  :
+  cat ../../image - <<EOI | $* >'functions 305c'
+    function 1000 1200
+    byte c8 0a 00 00 00
+    EOI
+}}
+
+: ident
+:
+{{
+  : magic
+  :
+  cat ../../image - <<EOI | $* >'ident 0'
+    byte 0 7e
+    EOI
+
+  : class
+  :
+  : Test ELFCLASS64.
+  :
+  cat ../../image - <<EOI | $* >'ident 0'
+    byte 4 02
+    EOI
+
+  : data
+  :
+  : Test ELFDATA2MSB.
+  :
+  cat ../../image - <<EOI | $* >'ident 0'
+    byte 5 02
+    EOI
+
+  : version
+  :
+  cat ../../image - <<EOI | $* >'ident 0'
+    byte 6 00
+    EOI
+}}
+
+: machine
+:
+{{
+  : type
+  :
+  : Test ET_EXEC.
+  :
+  cat ../../image - <<EOI | $* >'machine 0'
+    byte 10 02
+    EOI
+
+  : machine
+  :
+  : Test EM_X86_64.
+  :
+  cat ../../image - <<EOI | $* >'machine 0'
+    byte 12 3e
+    EOI
+}}
+
+: headers
+:
+{{
+  : entry-size
+  :
+  cat ../../image - <<EOI | $* >'headers 0'
+    byte 2a 38
+    EOI
+
+  : extended
+  :
+  : Test e_phnum set to PN_XNUM.
+  :
+  cat ../../image - <<EOI | $* >'headers 0'
+    byte 2c ff ff
+    EOI
+
+  : unmapped
+  :
+  : Test a headers segment with a non-zero file offset.
+  :
+  cat ../../image - <<EOI | $* >'headers 0'
+    byte 38 00 10
+    EOI
+
+  : unreadable
+  :
+  cat ../../image - <<EOI | $* >'headers 0'
+    byte 4c 00
+    EOI
+
+  : short
+  :
+  : Test program headers that extend past the headers segment file size.
+  :
+  cat ../../image - <<EOI | $* >'headers 0'
+    byte 44 40 00 00 00
+    EOI
+}}
+
+: truncated
+:
+{{
+  : header
+  :
+  cat ../../image - <<EOI | $* >'truncated 0'
+    truncate 33
+    EOI
+
+  : program
+  :
+  : Test e_phoff pointing past the image.
+  :
+  cat ../../image - <<EOI | $* >'truncated 0'
+    byte 1c 00 00 01 00
+    EOI
+}}
+
+: segments
+:
+{{
+  : outside
+  :
+  : Test a code segment memory size that exceeds the image.
+  :
+  cat ../../image - <<EOI | $* >'segments 11000'
+    byte 68 00 00 01 00
+    EOI
+
+  : unreadable
+  :
+  : Test a non-readable segment that exceeds the image, which is not
+  : checked.
+  :
+  cat ../../image - <<EOI | $* >'valid 11000'
+    byte 68 00 00 01 00
+    byte 6c 00
+    EOI
+
+  : capacity
+  :
+  : Test the maximum number of segments (the headers and unwind segments
+  : plus 14 described segments).
+  :
+  $* <<EOI >'valid f040'
+    segment rx 1000 1000
+    segment r 2000 1000
+    segment rw 3000 1000
+    segment r 4000 1000
+    segment r 5000 1000
+    segment r 6000 1000
+    segment r 7000 1000
+    segment r 8000 1000
+    segment r 9000 1000
+    segment r a000 1000
+    segment r b000 1000
+    segment r c000 1000
+    segment r d000 1000
+    segment r e000 1000
+    EOI
+
+  : too-many
+  :
+  $* <<EOI >'segments 10040'
+    segment rx 1000 1000
+    segment r 2000 1000
+    segment rw 3000 1000
+    segment r 4000 1000
+    segment r 5000 1000
+    segment r 6000 1000
+    segment r 7000 1000
+    segment r 8000 1000
+    segment r 9000 1000
+    segment r a000 1000
+    segment r b000 1000
+    segment r c000 1000
+    segment r d000 1000
+    segment r e000 1000
+    segment r f000 1000
+    EOI
+
+  : not-readable
+  :
+  : Test non-readable segments, which don't count toward the maximum.
+  :
+  $* <<EOI >'valid 10040'
+    segment rx 1000 1000
+    segment r 2000 1000
+    segment rw 3000 1000
+    segment r 4000 1000
+    segment r 5000 1000
+    segment r 6000 1000
+    segment r 7000 1000
+    segment r 8000 1000
+    segment r 9000 1000
+    segment r a000 1000
+    segment r b000 1000
+    segment r c000 1000
+    segment r d000 1000
+    segment r e000 1000
+    segment - f000 1000
+    EOI
+}}
