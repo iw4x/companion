@@ -12,85 +12,100 @@
 "
 \h0#preface|Preface|
 
-This document describes the IW4x Steam companion (\c{companion}), a Steam
-client module that shows IW4x to Steam friends as the game being played,
-along with \c{libcompanion}, the library it is built from. For the command
+This document describes the IW4x Steam companion (\c{companion}) along
+with \c{libcompanion}, the library that it is built from. For the command
 line interface of the Linux launcher refer to the \l{iw4x-steam(1)} man
 page.
 
+In this document we use the term \i{companion} to refer to the code that
+runs in the Steam client and \i{module} to refer to the file that contains
+this code, \c{iw4x-steam64.dll} on Windows and \c{libiw4x-steam.so} on
+Linux. The \i{game} is always IW4x and the \i{title} is the text that Steam
+friends see as the game being played.
+
 \h1#intro|Introduction|
 
-Steam tells each of our friends which game we are playing, and the CM server
-(the Steam server that the client stays connected to) only shows a game that
-our account owns. IW4x is not a Steam game, so friends do not see it.
+The IW4x Steam companion is a Steam client module that lets IW4x choose
+the title, that is, the line under the player's name in the friends list of
+each of their Steam friends. The game sets the title, for example,
+\c{IW4x: Modern Warfare 2}, and can change it at any time while it runs.
 
-The companion solves this from inside the Steam client. The client reports
-the games that are running to the CM server with the \c{GamesPlayed}
-message, one entry per game. The companion intercepts this message on its
-way out and, in each entry that refers to a running IW4x process, replaces
-the game with one that the account owns, Call of Duty: Modern Warfare 2
-(app 10190) or, if the account does not own it, Spacewar (app 480), which
-every account owns. It also sets the title that friends see to the one the
-game provides, for example, \c{IW4x: Modern Warfare 2}. Every other message
-is sent unchanged.
+Without the companion the game has no say in the title. Steam shows friends
+the Steam app that IW4x runs as (Call of Duty: Modern Warfare 2 or
+Spacewar) or, if the game is started from a non-Steam shortcut, the name of
+the shortcut.
 
-For this to work, each side needs to know about the other. The game
-registers itself with the companion by publishing a small record with the
+So how can a module in the Steam client change what friends see? The client
+reports the running games to the CM server (the Steam server that the
+client stays connected to) with the \c{GamesPlayed} message, one entry per
+game, and the CM server passes each entry on to friends. The companion
+intercepts this message on its way out and, in each entry that refers to a
+running IW4x process, sets the title to the one that the game provides. The
+CM server only shows a Steam app that the account owns, so the companion
+also sets the app to Call of Duty: Modern Warfare 2 (app 10190) or, if the
+account does not own it, to Spacewar (app 480), which every account owns.
+Every other message goes out unchanged.
+
+For this to work, the game and the companion need to know about each other.
+The game registers with the companion by publishing a small record with the
 app id and the title. The companion, in turn, publishes its status, which
 tells the game whether the companion is running and whether it managed to
-hook the Steam client. We call this exchange the game protocol and describe
-it in \l{#protocol Game Protocol}.
+hook the Steam client. We call this exchange the \i{game protocol} (see
+\l{#protocol Game Protocol} for details).
 
-The companion exists in two builds, one for each Steam client that IW4x
-runs with:
+There is a companion for each Steam client that IW4x runs with:
 
 \dl|
 
 \li|\c{\b{iw4x-steam64.dll}}
 
-The Windows module for the 64-bit Windows Steam client. The game ships it
-next to \c{iw4x.dll} and loads it into the running Steam client, so there
-is nothing to install.|
+The Windows module for the 64-bit Windows Steam client. The game ships this
+module next to \c{iw4x.dll} and loads it into the running Steam client, so
+there is nothing to install.|
 
 \li|\c{\b{libiw4x-steam.so}}
 
 The Linux module for the 32-bit native Linux Steam client, which runs the
-game under Proton. The Steam client can only load it at startup, so it is
-installed together with the \c{iw4x-steam} launcher, which starts the
-Steam client with the module preloaded.||
+game under Proton. The Steam client can only load this module when it
+starts. This is why the module is installed together with the
+\c{iw4x-steam} launcher, which starts the Steam client with the module
+preloaded.||
 
 Both modules are built from \c{libcompanion}, which contains the
-platform-independent parts of the companion: the parsing of the Steam
-client image, the location of the function to hook, the decoding of the
-records, and the rewriting of the reports. Because it has no dependency on
-either operating system, it is built and tested on any host.
+platform-independent parts of the companion. These are the parsing of the
+Steam client library and the location of the function to hook along with
+the decoding of the records and the rewriting of the reports. The library
+also contains the vendored MinHook library. The Windows module uses its
+hooking engine and both modules use its instruction decoder. The hooking
+engine is only built for Windows and the rest of the library has no
+dependency on either operating system. As a result, the library is built and
+tested on any host.
 
 We begin with a walkthrough that installs the Linux companion and then look
-at how the companion works, at each of the two platforms, and at the game
-protocol in more detail.
+at how the companion works in more detail. The final chapters describe the
+game protocol and the use of the library.
 
-\h1#start|Getting Started|
+\h#intro-linux|Installing on Linux|
 
-On Windows there is nothing to do: the game loads the companion into the
-Steam client every time it starts. So in this chapter we set up the Linux
+On Windows there is nothing to install since the game loads the companion
+into the Steam client every time it starts. So let's set up the Linux
 companion.
 
-The Linux module requires glibc 2.36 or later (Debian 12, for example), and
-building it requires GCC 16 or later together with the 32-bit glibc and
+The Linux module requires glibc 2.36 or later (Debian 12, for example).
+Building it requires GCC 16 or later together with the 32-bit glibc and
 libstdc++ development files. On Fedora, for example, these are the
 \c{glibc-devel.i686} and \c{libstdc++-devel.i686} packages.
 
 The Steam client is a 32-bit program and the programs that start it are
-64-bit. This is why the companion is installed from two build
-configurations into the same location: an i386 configuration that provides
-the module and the launcher, and an x86_64 configuration that provides the
-empty 64-bit stand-ins of the module. We will see what the stand-ins are for
-in \l{#linux-preload Preloading}.
+64-bit. So we install the companion from two build configurations into the
+same location. The i386 configuration provides the module and the launcher
+and the x86_64 configuration provides the empty 64-bit stand-ins of the
+module. We will see what the stand-ins are for in \l{#linux-preload
+Preloading}.
 
-First, we create the two configurations, specifying the installation
-location. The installation filter limits the installation to what the
-Steam client needs, leaving out the library's headers and \c{pkg-config}
-files:
+Let's create the two configurations. The installation filter limits the
+installation to what the Steam client needs and leaves out the library's
+headers and \c{pkg-config} files:
 
 \
 $ f='lib/iw4x-steam/@true lib/@false include/@false'
@@ -113,11 +128,11 @@ $ bpkg create -d companion-x86_64 cc \\
   config.install.filter=\"$f\"
 \
 
-Note that GCC only reports the i386 target that \c{-m32} selects if it is
-built with multiarch support (Debian, Ubuntu), which is why we specify the
-target explicitly.
+\N|GCC only reports the i386 target that \c{-m32} selects if it is built
+with multiarch support (Debian, Ubuntu). This is why we specify the target
+explicitly.|
 
-Then we build and install the companion in each configuration:
+Now we can build and install the companion in each configuration:
 
 \
 $ bpkg build -d companion-i686 \\
@@ -129,18 +144,18 @@ $ bpkg build -d companion-x86_64 \\
 $ bpkg install -d companion-x86_64 libcompanion
 \
 
-Now we can start Steam with the companion. If Steam is already running, we
-exit it first, since the module can only be loaded when the client starts:
+Let's start Steam with the companion. The module can only be loaded when
+the Steam client starts, so if Steam is already running, we exit it first:
 
 \
 $ iw4x-steam
 \
 
-The launcher passes its arguments to \c{steam} and refuses to start if
-Steam is still running. See \l{iw4x-steam(1)} for details.
+\N|The launcher passes its arguments to \c{steam} and refuses to start if
+Steam is still running. See \l{iw4x-steam(1)} for details.|
 
 The companion writes its diagnostics to the Steam client's \c{stderr},
-which the client copies to its console log. Let's see what it has to say:
+which the client copies to its console log. Let's see what we've got:
 
 \
 $ grep -o '\\[iw4x-steam\\].*' ~/.steam/steam/logs/console-linux.txt
@@ -151,11 +166,11 @@ $ grep -o '\\[iw4x-steam\\].*' ~/.steam/steam/logs/console-linux.txt
 
 The first line tells us that the companion found the function through
 which the Steam client sends its messages, at this offset in
-\c{steamclient.so}. The second line says that it hooked this function and
-the last one that the companion is active. From this point on it is idle
-until a game registers.
+\c{steamclient.so}. The second line says that the companion hooked this
+function and the last one that it is active. From this point on the
+companion is idle until a game registers.
 
-If we now start the game and look at the log again, we see two more lines:
+Now let's start the game and look at the log again:
 
 \
 [iw4x-steam] record changed
@@ -163,65 +178,67 @@ If we now start the game and look at the log again, we see two more lines:
   bytes, after a frame on 0xdce81d40)
 \
 
-Steam reported the game right after starting it, before the game had a
-chance to register. So once the game published its record, the companion
-rewrote the last report and sent it again. From now on our friends see
-IW4x as the game we are playing.
+What happened here? Steam reported the game right after starting it, before
+the game had a chance to register. Once the game published its record, the
+companion rewrote the last report and sent it again. From now on our
+friends see the title that the game provides.
 
-\h1#operation|How the Companion Works|
+\h1#operation|Companion Operation|
 
 In this chapter we look at what the companion does inside the Steam
-client, which is the same on both platforms. The platform-specific parts,
-namely, how the companion gets into the Steam client and how it finds the
-game's record, are the subject of the next two chapters.
+client, which is the same on both platforms. How the companion gets into
+the Steam client and how it finds the record of a game are platform-specific
+and are the subject of the next two chapters.
 
 \h#operation-startup|Startup|
 
-Once loaded into the Steam client, the companion performs the following
-steps on its own thread:
+Once in the Steam client, the companion performs the following steps on a
+thread of its own:
 
 \ol|
 
-\li|Publish its status with the \c{starting} state. Publishing the status
-also makes sure there is a single companion, so a second copy of the module
-finds the status already published and does nothing.|
+\li|Publish the status with the \c{starting} state. Publishing the status
+also makes sure that there is a single companion: a second copy of the
+module finds the status already published and does nothing.|
 
 \li|Find the send function in the Steam client library,
 \c{steamclient64.dll} on Windows and \c{steamclient.so} on Linux.|
 
 \li|Hook the send function.|
 
-\li|Start watching for changes to the records.|
+\li|Start watching the records for changes.|
 
 \li|Publish the \c{active} state.||
 
 If the companion does not recognize the Steam client library, then it
-publishes the \c{unsupported} state. And if it fails to hook the function,
-then it publishes the \c{failed} state. In both cases it does nothing else
-and the Steam client continues as if the module was never loaded.
+publishes the \c{unsupported} state. If it fails to hook the send function,
+then it publishes the \c{failed} state. In either case it does nothing
+further and the Steam client continues as if the module was never loaded.
 
 \h#operation-locate|Locating the Send Function|
 
 The Steam client sends every message to the CM server through the
 \c{CWebSocketConnection::BBuildAndAsyncSendFrame()} function. The Steam
-client library does not export it and its machine code changes with almost
-every Steam build, so the companion cannot find it by a byte signature.
-It finds the function by its structure.
+client library does not export this function and its machine code changes
+with almost every Steam build. So how does the companion find it? By its
+structure.
 
 The function opens a profiler scope named after itself. As a result, the
-library contains the function name as a string, which we call the anchor,
-and the function loads the anchor's address. The companion parses the
-library image, finds every instruction that loads the anchor's address, and
-maps each of them to the function that contains it using the unwind
-information. How the send function is then picked among these functions
-depends on the architecture. On x64 the functions that inline the send
-function also load the anchor, and the send function is the one that loads
-it within 256 bytes of its entry, right after its prologue. On i386 the
-address is computed relative to the global offset table, and the send
-function is the one that loads the table's address itself.
+library contains the function's name as a string, which we call the
+\i{anchor}, and the function loads the anchor's address. The companion
+parses the library image and finds every instruction that loads this
+address. It then maps each such instruction to the function that contains
+it using the unwind information.
+
+Which of these functions is the send function depends on the architecture.
+On x64 the functions that inline the send function also load the anchor and
+the send function is the one that loads it within 256 bytes of its entry,
+right after its prologue. On i386 the address is computed relative to the
+global offset table and the send function is the one that loads the
+table's address itself.
 
 The search must end with exactly one function. Any other result means a
-Steam build that the companion does not recognize, which it reports as
+Steam build that the companion does not recognize and that it reports as
 \c{unsupported}. The diagnostics include the number of references and
 candidates that were found, for example:
 
@@ -230,56 +247,58 @@ candidates that were found, for example:
   references, 2 candidates)
 \
 
-\h#operation-hook|The Send Hook|
+\h#operation-hook|Send Hook|
 
-The companion hooks the send function with a detour: it overwrites the
+The companion hooks the send function with a \i{detour}: it overwrites the
 start of the function with a jump to its own code, which calls the original
-function through a trampoline. On Windows the detour is installed with
-MinHook. On Linux, where the Steam client is 32-bit, the companion builds
-its own i386 detour and refuses to install it if the overwritten
-instructions contain anything it cannot relocate.
+function through a \i{trampoline}. On Windows the detour is installed with
+the MinHook hooking engine. On Linux the Steam client is 32-bit and the
+companion builds its own i386 detour. It decodes the overwritten
+instructions with the MinHook instruction decoder and refuses to install
+the detour if they contain anything that it cannot relocate.
 
 The hook runs on the Steam client's network thread for every message that
-the client sends. It recognizes a \c{GamesPlayed} message from its header,
-which only takes a few comparisons, and passes every other message to the
-original function unchanged.
+the client sends, so the common case must be cheap. The hook recognizes a
+\c{GamesPlayed} message by its header with a few comparisons and passes
+every other message to the original function as is.
 
-\h#operation-rewrite|Rewriting Reports|
+\h#operation-rewrite|Report Rewriting|
 
 A \c{GamesPlayed} report contains a \c{GamePlayed} entry for each running
-game, which includes the id of the game and the id of the process that
-Steam tracks for it. For each entry the companion looks for a record that
-the game in this process has published (see \l{#protocol Game Protocol}).
-If there is one, then the companion sets the game id to the app id from the
-record and the game's extra information, which the CM server shows to
-friends as the title, to the title from the record.
+game. The entry includes the game id and the id of the process that Steam
+tracks for this game. For each entry the companion looks for the record
+that the game in this process has published (see \l{#protocol Game
+Protocol}). If there is one, then the companion sets the game id to the app
+id from the record and the game's extra information to the title from the
+record. It is this extra information that the CM server shows to friends.
 
-The rest of the report is copied byte for byte. A report that contains no
-entries of registered processes is sent unchanged, and so is a report
-larger than 8192 bytes, which is far beyond a realistic report.
+The rest of the report is copied byte for byte. A report without entries of
+registered processes is sent unchanged. So is a report larger than 8192
+bytes, which is far beyond any realistic report.
 
-\h#operation-resend|Resending Reports|
+\h#operation-resend|Report Resending|
 
 Steam reports a game right after starting it, normally before the game has
-published its record. After that it only sends a new report when the set of
-running games changes. The game can also update its record while it is
-running, for example, to switch from Modern Warfare 2 to Spacewar. So
-without further measures, friends would not see IW4x until something else
-changes.
+published its record. After that Steam only sends a new report when the set
+of running games changes. The game can also update its record while it
+runs, for example, to switch from Modern Warfare 2 to Spacewar. Without
+further measures friends would therefore not see the title until something
+else changes.
 
-To handle this, the companion keeps the last report along with the message
-that was actually sent for it, and watches the records for changes. On a
-change it rewrites the report again and, if the result differs from what
-the CM server last received, sends it on the same connection.
+To handle this, the companion keeps the last report together with the
+message that was actually sent for it and watches the records for changes.
+On a change it rewrites the report again and, if the result differs from
+what the CM server last received, sends it on the same connection.
 
-The companion has no thread of its own in the Steam client's networking
-code, so the resend happens when the Steam client sends the next message on
-the thread that sent the last report. Steam uses a single thread per
-connection, so the resend never interleaves with the client's own messages
-on this connection. If the connection has been idle for 60 seconds, then
-the companion assumes it is closed and drops the report.
+When exactly is the report resent? The companion has no thread of its own
+in the Steam client's networking code. So the resend happens when the Steam
+client sends its next message on the thread that sent the last report.
+Steam uses a single thread per connection, which means the resend never
+interleaves with the client's own messages on this connection. If the
+connection has been idle for 60 seconds, then the companion assumes it is
+closed and drops the report.
 
-\h1#linux|The Linux Companion|
+\h1#linux|Linux Companion|
 
 The native Linux Steam client runs Windows games with Proton, in a
 container provided by the Steam Runtime. In this chapter we look at how the
@@ -289,36 +308,37 @@ that runs in such a container.
 \h#linux-preload|Preloading|
 
 The Steam client does not load plugins, so the module is loaded with
-\c{LD_PRELOAD}. For this reason it must be in place when the Steam client
-starts and the \c{iw4x-steam} launcher takes care of this.
+\c{LD_PRELOAD}. This is why the module must be in place when the Steam
+client starts and why the Steam client is started with the \c{iw4x-steam}
+launcher.
 
-The Steam client is started by a chain of 64-bit programs, which all
-inherit \c{LD_PRELOAD}. A
-64-bit program cannot load the 32-bit module and its dynamic linker warns
-about each program that it fails to preload. To avoid this, the launcher
-names the module with the dynamic linker's \c{$PLATFORM} in its path:
+A chain of 64-bit programs starts the Steam client and they all inherit
+\c{LD_PRELOAD}. A 64-bit program cannot load the 32-bit module and its
+dynamic linker warns about every program that it fails to preload. To avoid
+these warnings, the launcher refers to the module through the dynamic
+linker's \c{$PLATFORM} token:
 
 \
 LD_PRELOAD=/usr/local/lib/iw4x-steam/$PLATFORM/libiw4x-steam.so
 \
 
-The dynamic linker expands \c{$PLATFORM} separately in each process. In the
-32-bit Steam client it expands to \c{i686}, which contains the module. In
-the 64-bit programs it expands to \c{x86_64} or, depending on the CPU, to
-\c{haswell} or \c{xeon_phi}, each of which contains an empty 64-bit
-stand-in.
+The dynamic linker expands \c{$PLATFORM} in each process separately. In
+the 32-bit Steam client it expands to \c{i686}, the directory that contains
+the module. In a 64-bit program it expands to \c{x86_64} or, on some CPUs,
+to a more specific name (\c{haswell}, \c{xeon_phi}). Each of these
+directories contains an empty 64-bit stand-in.
 
 In every process that it is loaded into, the module first removes itself
-from \c{LD_PRELOAD}, so the processes that this one starts in turn, such as
-Proton and the games, do not load it. In any process other than the Steam
-client, identified by its executable name, \c{steam}, this is all the
-module does.
+from \c{LD_PRELOAD}. As a result, the processes that this one starts in turn
+(Proton and the games, for example) do not load it. In any process other
+than the Steam client, which the module recognizes by its executable name
+(\c{steam}), this is all that the module does.
 
 \h#linux-startup|Startup|
 
 The companion publishes its status in the
 \c{/dev/shm/iw4x-steam-companion.\i{uid}} file, where \i{uid} is the user
-id, and keeps the file locked while it runs. A second companion of the same
+id, and keeps this file locked while it runs. Another companion of the same
 user, for example, one in a second Steam client, fails to lock the file and
 does nothing:
 
@@ -326,57 +346,58 @@ does nothing:
 [iw4x-steam] another companion is resident, staying inert
 \
 
-The Steam client loads \c{steamclient.so} after its bootstrapper finishes
+The Steam client loads \c{steamclient.so} once its bootstrapper finishes
 updating it, which can take a while on a slow connection. So the companion
-waits up to 30 minutes for the library to load before it gives up and
+waits for up to 30 minutes for the library to load before it gives up and
 publishes the \c{unsupported} state.
 
 When the Steam client exits, the companion removes the status file. If the
 client crashes, then the file is left behind and the next companion takes
-it over. Meanwhile, the game recognizes the status as stale by the Steam
-client's process id that it contains.
+it over. In the meantime the game recognizes the status as stale by the
+Steam client's process id that it contains.
 
-\h#linux-lookup|Finding the Game|
+\h#linux-lookup|Game Lookup|
 
-The native Steam client cannot see the Windows objects of a game running
-under Wine, so the game publishes its record as a file in \c{/dev/shm},
-which the Proton container shares with the host. The question is which
-file belongs to which report.
+The native Steam client cannot see the Windows objects of a game that runs
+under Wine. So the game publishes its record as a file in \c{/dev/shm},
+which the Proton container shares with the host. This leaves the question
+of which file belongs to which report.
 
-Steam reports a game with the process id of the process it tracks for it,
-which is one of Steam's own helpers or Proton's processes. The game itself
-cannot find out its Linux process id, since Wine performs its file
-operations in the \c{wineserver} process of its prefix. So the
-game names its record after the process id of this \c{wineserver}, which
-Proton starts in the process tree that Steam tracks.
+Steam reports a game with the id of the process that it tracks for the
+game, which is one of Steam's own helpers or one of Proton's processes. The
+game itself cannot find out its Linux process id since Wine performs its
+file operations in the \c{wineserver} process of its prefix. So the game
+names its record after the process id of this \c{wineserver}, which Proton
+starts in the process tree that Steam tracks.
 
-To find the record of a report, the companion searches the reported process
-and its descendants, breadth-first. For each process it tries the record
-under each of the process's ids, one per process id namespace that the
-process is in, since the game sees the ids of the container. The record
+To find the record for a report, the companion searches the reported
+process and its descendants, breadth-first. For each process it tries the
+record under each of the process's ids, one per process id namespace that
+the process is in, since the game sees the ids of the container. The record
 also contains the start time of the \c{wineserver} process, which tells a
-record apart from a stale one left by an earlier process with the same id.
+current record apart from a stale one left by an earlier process with the
+same id.
 
-A game under Proton consists of a few dozen processes, so the search visits
-at most 256 and issues diagnostics if it runs out of processes to visit:
+A game under Proton consists of a few dozen processes. The search visits at
+most 256 of them and issues diagnostics if it runs out of processes to
+visit:
 
 \
 [iw4x-steam] no record for process 4242 (overflow)
 \
 
 It also issues diagnostics if the reported process is the Steam client or
-one of its ancestors (\c{related}), whose tree contains every game and is
-therefore not searched.
+one of its ancestors (\c{related}). The tree of such a process contains
+every game and is therefore not searched.
 
 \h#linux-glibc|glibc Compatibility|
 
-The module runs in the Steam client and so with the glibc of the system.
-It links
-the C++ runtime statically and binds its glibc references to versions no
-newer than 2.36. As a result, one build runs on any distribution with
-glibc 2.36 or later, which the module's tests verify.
+The module runs in the Steam client and therefore with the glibc of the
+system. It links the C++ runtime statically and binds its glibc references
+to versions no newer than 2.36. As a result, one build runs on any
+distribution with glibc 2.36 or later, which the module's tests verify.
 
-\h1#windows|The Windows Companion|
+\h1#windows|Windows Companion|
 
 On Windows the Steam client is a 64-bit program and the game is a 32-bit
 one. A 32-bit process cannot load a module into a 64-bit one, so the game
@@ -385,8 +406,8 @@ enlists the help of the 64-bit \c{rundll32.exe}.
 \h#windows-attach|Attaching|
 
 The game attaches the companion to the Steam client by running the
-\c{IW4xAttach} entry point of the module in the 64-bit \c{rundll32.exe},
-passing the Steam client's process id:
+module's \c{IW4xAttach} entry point in \c{rundll32.exe} and passing the
+Steam client's process id:
 
 \
 rundll32.exe \"...\\iw4x-steam64.dll\",IW4xAttach 5120
@@ -394,7 +415,7 @@ rundll32.exe \"...\\iw4x-steam64.dll\",IW4xAttach 5120
 
 The entry point verifies that the process is a 64-bit Steam client and
 loads the module into it by calling \c{LoadLibraryW()} on a remote thread.
-It then waits for the companion to settle and returns the result as the
+It then waits for the companion to settle and returns the outcome as the
 \c{rundll32.exe} exit code:
 
 \dl|
@@ -440,47 +461,50 @@ loading anything.
 \h#windows-startup|Startup|
 
 The companion publishes its status in a named file mapping whose name
-includes the Steam client's process id. Creating the mapping is also what
-makes sure there is a single companion per Steam client. It then finds the
-send function in \c{steamclient64.dll}, which the Steam client loads before
-any game can start (if it is not loaded, then the companion reports the
-\c{unsupported} state), and proceeds as described in \l{#operation-startup
-Startup}. The module stays loaded until the Steam client exits since, once
-the hook is installed, the client executes its code.
+includes the Steam client's process id. Creating this mapping is also what
+makes sure that there is a single companion per Steam client. The companion
+then finds the send function in \c{steamclient64.dll} and proceeds as
+described in \l{#operation-startup Startup}.
 
-The game publishes its record in a named file mapping of its own and, after
-every change to the record, signals a named event, which is how the
-companion learns about the change.
+\N|The Steam client loads \c{steamclient64.dll} before any game can start.
+If the library is not loaded, then the companion publishes the
+\c{unsupported} state.|
 
-The companion writes its diagnostics to the debugger output, which can be
-viewed with a tool such as DebugView. Each line starts with
-\c{[iw4x-steam64]}.
+The module stays loaded until the Steam client exits since, once the hook
+is installed, the client executes the module's code.
+
+The game publishes its record in a named file mapping of its own and
+signals a named event after every change to the record. This event is how
+the companion learns about the change.
+
+The companion writes its diagnostics to the debugger output, where each
+line starts with \c{[iw4x-steam64]}. To view them, use a tool such as
+DebugView.
 
 \h1#protocol|Game Protocol|
 
-The game protocol is how the game and the companion communicate. It is
-defined in \c{<libcompanion/protocol.hxx>}, which only depends on the
-standard library, so that the game can include it directly.
+The game protocol defines how the game and the companion communicate. It
+is declared in \c{<libcompanion/protocol.hxx>}, which only depends on the
+standard library so that the game can include it directly.
 
 \h#protocol-compat|Compatibility|
 
-The game, the Windows companion, and the Linux companion are each built
-with their own toolchain for their own architecture and each is upgraded on
-its own schedule. The companion also stays loaded until the Steam client
-exits, so any version of the game can encounter any version of the
-companion.
+The game and each of the two companions are built with their own toolchains
+for their own architectures and are upgraded on their own schedules. The
+companion also stays loaded until the Steam client exits. As a result, any
+version of the game can meet any version of the companion.
 
-For this reason every structure of the protocol has a fixed layout of
-32-bit fields and starts with a magic, a version, and its size. A reader
-accepts only the exact layout it knows and every change to a layout
+This is why every structure of the protocol has a fixed layout of 32-bit
+fields and starts with a magic followed by its version and size. A reader
+only accepts the exact layout that it knows and every change to a layout
 increments its version. In addition, the companion publishes its build
-number, which is incremented with every change of the companion's behavior
+number, which is incremented with every change in the companion's behavior
 that the game can observe. The current build is 2.
 
 \h#protocol-record|Registration Record|
 
-The game registers itself by publishing a record with the app id to report
-and the title to show:
+The game registers by publishing a record with the app id to report and the
+title to show:
 
 \
 struct record
@@ -495,28 +519,28 @@ struct record
 \
 
 The app id must be non-zero and fit into 24 bits. The title must be
-non-empty, fit into the 64 bytes with the terminating \c{NUL}, be valid
-UTF-8, and contain no control characters. The game can update both of them
-while it runs. For example, it starts with Modern Warfare 2 (app 10190)
-and switches to Spacewar (app 480) if Steam reports that the account does
-not own it.
+non-empty and valid UTF-8 without control characters. It must also fit
+into the 64 bytes together with the terminating \c{NUL}. The game can
+update both while it runs. For example, it starts with Modern Warfare 2
+(app 10190) and switches to Spacewar (app 480) if Steam reports that the
+account does not own it.
 
-On Windows the record is published in a named file mapping,
-\c{Local\\IW4x.SteamPresence.}\i{pid}, where \i{pid} is the game's process
-id, which the record repeats. The mapping lives while the game keeps a
-handle to it, so the record goes away with the game. The game writes the
-magic last with release ordering and the companion reads it first with
-acquire ordering, so a record with the right magic is always complete.
-After every change to the record, the game sets the auto-reset event
-\c{Local\\IW4x.SteamPresence.Changed.}\i{steam-pid}, where
+On Windows the record is published in the
+\c{Local\\IW4x.SteamPresence.}\i{pid} named file mapping, where \i{pid} is
+the game's process id, which the record repeats. The mapping exists while
+the game holds a handle to it, so the record goes away with the game. The
+game writes the magic last with release ordering and the companion reads it
+first with acquire ordering. As a result, a record with the right magic is
+always complete. After every change to the record the game sets the
+\c{Local\\IW4x.SteamPresence.Changed.}\i{steam-pid} auto-reset event, where
 \i{steam-pid} is the Steam client's process id.
 
 On Linux the record is published in the \c{/dev/shm/iw4x-presence.}\i{pid}
 file, where \i{pid} is the process id of the game's \c{wineserver} (see
-\l{#linux-lookup Finding the Game}). The game opens it through Wine's
-\c{\\\\?\\unix\\} path prefix and writes it in one go. The record has two
-more fields, the \c{wineserver} start time from field 22 of
-\c{/proc/}\i{pid}\c{/stat}:
+\l{#linux-lookup Game Lookup}). The game opens this file through Wine's
+\c{\\\\?\\unix\\} path prefix and writes it in one go. The Linux record has
+two more fields that hold the \c{wineserver} start time, which is field 22
+of \c{/proc/}\i{pid}\c{/stat}:
 
 \
 struct unix_record
@@ -534,9 +558,9 @@ struct unix_record
 
 \h#protocol-status|Companion Status|
 
-The companion publishes its status, which the game reads to find out whether
-the companion is running and in which state. The status contains the
-companion's state:
+The companion publishes its status, which the game reads to find out
+whether the companion is running and in which state. The state has one of
+the following values:
 
 \dl|
 
@@ -556,10 +580,11 @@ The companion does not recognize the Steam client library.|
 
 The companion failed to hook the send function.||
 
-On Windows the status is published in a named file mapping,
-\c{Local\\IW4x.SteamCompanion.}\i{steam-pid}, where \i{steam-pid} is the
-Steam client's process id. The companion stores the state last with
-release ordering and the game loads it first with acquire ordering:
+On Windows the status is published in the
+\c{Local\\IW4x.SteamCompanion.}\i{steam-pid} named file mapping, where
+\i{steam-pid} is the Steam client's process id. The companion stores the
+state last with release ordering and the game loads it first with acquire
+ordering:
 
 \
 struct status
@@ -575,9 +600,9 @@ struct status
 
 On Linux the status is published in the
 \c{/dev/shm/iw4x-steam-companion.}\i{uid} file, where \i{uid} is the real
-user id, which the game reads from \c{/proc/self/status}. It also contains
-the Steam client's process id, which allows the game to recognize a status
-left behind by a crashed client:
+user id, which the game reads from \c{/proc/self/status}. The Linux status
+also contains the Steam client's process id, which lets the game recognize
+a status left behind by a crashed client:
 
 \
 struct unix_status
@@ -594,9 +619,9 @@ struct unix_status
 
 \h1#usage|Usage|
 
-The \c{libcompanion} package is available from its git repository. To
-install the Linux companion, follow the steps in \l{#start Getting
-Started}.
+The \c{libcompanion} package is available from its \c{git} repository. To
+install the Linux companion, follow the steps in \l{#intro-linux
+Installing on Linux}.
 
 To start using \c{libcompanion} in your project, add the following
 \c{depends} value to your \c{manifest}, adjusting the version constraint
@@ -614,8 +639,8 @@ import libs = libcompanion%lib{companion}
 
 Note that the library interface is internal to the companion and is not
 stable. The game protocol (\c{<libcompanion/protocol.hxx>}) is the
-exception and follows the compatibility rules described in
-\l{#protocol-compat Compatibility}.
+exception and follows the rules described in \l{#protocol-compat
+Compatibility}.
 
 The package provides the following importable targets:
 
@@ -627,8 +652,12 @@ exe{iw4x-steam}
 \
 
 The \c{lib{companion\}} library contains the platform-independent parts of
-the companion. The \c{libs{iw4x-steam64\}} target is the Windows module and
-is only built for x86_64 Windows. The \c{libs{iw4x-steam\}} target is the
-Linux module and \c{exe{iw4x-steam\}} is its launcher. Both are only built
-for i386 Linux and the launcher only when installing.
+the companion along with MinHook, whose headers are installed into the
+\c{libcompanion/minhook/} subdirectory. The instruction decoder headers,
+\c{hde32.h} and \c{hde64.h}, are installed on every target and the hooking
+engine header, \c{minhook.h}, only on Windows. The \c{libs{iw4x-steam64\}}
+target is the Windows module and is only built for x86_64 Windows. The
+\c{libs{iw4x-steam\}} target is the Linux module and \c{exe{iw4x-steam\}}
+is its launcher. Both are only built for i386 Linux and the launcher only
+when installing.
 "
