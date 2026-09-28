@@ -10,8 +10,11 @@ impl_libs = # Implementation dependencies.
 #
 include ../minhook/
 
+# The library excludes the Windows module's platform code (*-win32), which
+# keeps it platform-independent and testable on any host.
+#
 ./: lib{companion}: libul{companion}: \
-  {hxx ixx txx cxx}{** -**.test... -version} \
+  {hxx ixx txx cxx}{** -**.test... -version -*-win32} \
   hxx{version} ../minhook/libul{hde} $impl_libs $intf_libs
 
 # Unit tests.
@@ -33,12 +36,59 @@ for t: cxx{**.test...}
 
 hxx{version}: in{version} $src_root/manifest
 
+# Windows companion module that is loaded into the Steam client (see
+# host-win32.cxx and attach-win32.cxx).
+#
+# The game expects the module next to iw4x.dll under a fixed name (see
+# companion_module_name), so the name has no lib prefix or version.
+#
+windows = ($cxx.target.class == 'windows')
+
+./: libs{iw4x-steam64}: include = $windows
+
+libs{iw4x-steam64}: {hxx txx cxx}{*-win32} libul{companion} \
+  ../minhook/libul{minhook}
+{
+  bin.lib.prefix = ''
+  bin.lib.suffix = ''
+  install        = bin/
+}
+
+# The module is loaded into processes whose DLL search path we don't control
+# (the Steam client and rundll32), so link the MinGW runtime statically.
+# This only applies to the module.
+#
+if ($cxx.target.system == 'mingw32')
+  libs{iw4x-steam64}: cxx.loptions += -static
+
+# The module is only loaded, never linked, so we install the library
+# without the development files (import library and pkg-config files).
+#
+# Note: we use patterns because a target name here would declare the
+# member ahead of its link rule. The libi{} import library is Windows-only.
+#
+{pc pcs}{iw4x-steam*}: install = false
+
+if $windows
+  libi{iw4x-steam*}: install = false
+
 # Build options.
 #
 cxx.poptions =+ "-I$out_root" "-I$src_root"
 
 obja{*}: cxx.poptions += -DLIBCOMPANION_STATIC_BUILD
 objs{*}: cxx.poptions += -DLIBCOMPANION_SHARED_BUILD
+
+# The Windows module includes <MinHook.h>. Note that the *.export.* options
+# of a utility library are not applied to the targets that link it (they
+# are only propagated further), so we specify the header directory here.
+#
+# Note that only one matching pattern-specific append applies to a target,
+# so the module's objects don't get the objs{*} options above. This is
+# intentional since the module contains the library and is not its shared
+# build (see export.hxx).
+#
+objs{*-win32}: cxx.poptions += "-I$src_root/minhook/include"
 
 # The detour builder includes <hde32.h>, which includes <windows.h> for its
 # integer types. Here <windows.h> is always the stand-in (see
@@ -79,3 +129,7 @@ else
   install         = include/libcompanion/
   install.subdirs = true
 }
+
+# The Windows module's platform headers are internal and not installed.
+#
+{hxx txx}{*-win32}: install = false
