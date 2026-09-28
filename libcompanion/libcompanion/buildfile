@@ -4,9 +4,15 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
+# Load the vendored MinHook targets (see ../minhook/buildfile): the HDE
+# instruction decoder for detour.cxx and the full hooking engine for the
+# Windows module.
+#
+include ../minhook/
+
 ./: lib{companion}: libul{companion}: \
   {hxx ixx txx cxx}{** -**.test... -version} \
-  hxx{version} $impl_libs $intf_libs
+  hxx{version} ../minhook/libul{hde} $impl_libs $intf_libs
 
 # Unit tests.
 #
@@ -33,6 +39,17 @@ cxx.poptions =+ "-I$out_root" "-I$src_root"
 
 obja{*}: cxx.poptions += -DLIBCOMPANION_STATIC_BUILD
 objs{*}: cxx.poptions += -DLIBCOMPANION_SHARED_BUILD
+
+# The detour builder includes <hde32.h>, which includes <windows.h> for its
+# integer types. Here <windows.h> is always the stand-in (see
+# ../minhook/buildfile), which provides these types without the Windows
+# API, including on Windows.
+#
+# Note: these are set on the group members since a value on obj{detour}
+# would be found before the obja{*} and objs{*} appends above and hide them.
+#
+{obja objs obje}{detour}: cxx.poptions =+ "-I$src_root/minhook/compat" \
+                                         "-I$src_root/minhook/src/hde"
 
 # Export options.
 #
