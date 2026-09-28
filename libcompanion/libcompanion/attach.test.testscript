@@ -1,0 +1,29 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+: arguments
+: Test parse_attach_arguments() with various command lines
+:
+{{
+  $* arguments '4242'         >'4242'       : plain
+  $* arguments '  4242	'     >'4242'       : whitespace
+  $* arguments '4294967295'   >'4294967295' : largest
+  $* arguments '4294967296'   >'invalid'    : overflow
+  $* arguments '0'            >'invalid'    : zero
+  $* arguments ''             >'invalid'    : empty
+  $* arguments '   '          >'invalid'    : blank
+  $* arguments '+4242'        >'invalid'    : sign
+  $* arguments '-1'           >'invalid'    : negative
+  $* arguments '0x10'         >'invalid'    : hex
+  $* arguments '42 42'        >'invalid'    : two
+  $* arguments '4242x'        >'invalid'    : trailing
+}}
+
+: result
+: Test the mapping of settled companion states to attach results
+:
+{{
+  $* result active      >'active'      : active
+  $* result unsupported >'unsupported' : unsupported
+  $* result failed      >'failed'      : failed
+}}
