@@ -1,0 +1,116 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+# GamesPlayed report of process 100 (EMsg 742 with an empty protobuf
+# header) and the same report rewritten for the registration below.
+#
+report  = 'e6020080000000000a024864'
+rewrite = 'e6020080000000000a11486411ce270000000000003a0449573478'
+
++cat <<"EOI" >=registration
+  register 100 10190 IW4x
+  EOI
+
+: other-opcode
+:
+: Test a non-binary frame, which is passed to the original function as is.
+:
+$* <<"EOI" >>"EOO"
+  send 1 1 $report
+  EOI
+  original 1 1 $report -> true
+  sent true
+  EOO
+
+: null
+:
+: Test a binary frame with NULL data.
+:
+$* <<"EOI" >>"EOO"
+  send 1 2 -
+  EOI
+  original 1 2 - -> true
+  sent true
+  EOO
+
+: other-frame
+:
+cat ../registration - <<"EOI" | $* >>"EOO"
+  send 1 2 68656c6c6f
+  EOI
+  original 1 2 68656c6c6f -> true
+  sent true
+  EOO
+
+: rewrite
+:
+: Test a report of a registered process.
+:
+cat ../registration - <<"EOI" | $* >>"EOO"
+  send 1 2 $report
+  EOI
+  diag rewrote GamesPlayed \(12 -> 27 bytes\)
+  original 1 2 $rewrite -> true
+  sent true
+  EOO
+
+: unregistered
+:
+: Test a report without registered processes.
+:
+$* <<"EOI" >>"EOO"
+  send 1 2 $report
+  EOI
+  original 1 2 $report -> true
+  sent true
+  EOO
+
+: result
+:
+: Make sure the hook returns the original function result, including for
+: a rewritten report.
+:
+{{
+  : other-frame
+  :
+  $* <<"EOI" >>"EOO"
+    result false
+    send 1 2 68656c6c6f
+    EOI
+    original 1 2 68656c6c6f -> false
+    sent false
+    EOO
+
+  : rewrite
+  :
+  cat ../../registration - <<"EOI" | $* >>"EOO"
+    result false
+    send 1 2 $report
+    EOI
+    diag rewrote GamesPlayed \(12 -> 27 bytes\)
+    original 1 2 $rewrite -> false
+    sent false
+    EOO
+}}
+
+: resend
+:
+: Test a report sent before the game registered. Make sure the rewritten
+: report is sent on the report's connection after the next frame on the same
+: thread, even if that frame uses another connection.
+:
+$* <<"EOI" >>"EOO"
+  clock 7 0
+  send 1 2 $report
+  register 100 10190 IW4x
+  change
+  clock 7 100
+  send 2 2 68656c6c6f
+  EOI
+  original 1 2 $report -> true
+  sent true
+  original 2 2 68656c6c6f -> true
+  original 1 2 $rewrite -> true
+  diag resent GamesPlayed on connection 0x1 \(12 -> 27 bytes, after a frame on 0x2\)
+  sent true
+  EOO
