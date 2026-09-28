@@ -1,0 +1,318 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Each image has a code segment at 1000. By default, the function starts at
+# 1000, the image is loaded at 10000000, and the trampoline is at 20000000.
+# With these addresses the jump back from 20000000 + n to 10001000 + n is
+# always e9 fb 0f 00 f0.
+#
+# The segment is zero-filled and 00 00 decodes as add [eax], al, so each
+# function has an even number of bytes. Each refused instruction is followed
+# by enough nops to fill the jump, which makes it the only possible reason
+# for the refusal.
+#
+test.arguments = 1000 10000000 20000000
+
++cat <<EOI >=image
+  segment rx 1000 1000
+  EOI
+
+: valid
+:
+: Test instructions that fill the jump exactly (push ebp; mov ebp, esp;
+: push edi; push esi).
+:
+cat ../image - <<EOI | $* >'valid 5 55 89 e5 57 56 e9 fb 0f 00 f0'
+  function 1000 1010
+  byte 1000 55 89 e5 57 56 53 83 ec 1c 90
+  EOI
+
+: replaced
+:
+{{
+  : partial
+  :
+  : Test the last overwritten instruction (sub esp, 1c) extending past the
+  : jump.
+  :
+  cat ../../image - <<EOI | $* >'valid 6 55 89 e5 83 ec 1c e9 fb 0f 00 f0'
+    function 1000 1010
+    byte 1000 55 89 e5 83 ec 1c
+    EOI
+
+  : longest
+  :
+  : Test the maximum size (15 bytes, a padded nopw) last overwritten
+  : instruction.
+  :
+  cat ../../image - <<EOI | $* >>EOO
+    function 1000 1020
+    byte 1000 90 90 90 90 66 66 66 66 66 66 2e 0f 1f 84
+    byte 100e 00 00 00 00 00 90
+    EOI
+    valid 13 90 90 90 90 66 66 66 66 66 66 2e 0f 1f 84 00 00 00 00 00 e9 fb 0f 00 f0
+    EOO
+
+  : segment-end
+  :
+  : Test a function that ends at the end of its segment followed by an
+  : inaccessible segment. Make sure the decoder reads only the padded copy.
+  :
+  test.arguments = 1ff0 10000000 20000000;
+  cat ../../image - <<EOI | $* >>EOO
+    segment - 2000 1000
+    function 1ff0 2000
+    byte 1ff0 55 89 e5 57 56 90 90 90
+    byte 1ff8 90 90 90 90 90 90 90 90
+    EOI
+    valid 5 55 89 e5 57 56 e9 eb 1f 00 f0
+    EOO
+}}
+
+: relocate
+:
+: Test the program counter call relocation. The replacement stores the
+: return address (10001006) where the call would.
+:
+{{
+  : thunk
+  :
+  : Test the GCC PC thunk call (push ebx; call __x86.get_pc_thunk.bx) that
+  : becomes mov ebx, 10001006.
+  :
+  cat ../../image - <<EOI | $* >'valid 6 53 bb 06 10 00 10 e9 fb 0f 00 f0'
+    function 1000 1010
+    function 1f00 1f04
+    byte 1000 53 e8 fa 0e 00 00 81 c3 00 20 00 00
+    byte 1f00 8b 1c 24 c3
+    EOI
+
+  : next
+  :
+  : Test the Clang next instruction call (push ebp; call <next>) that
+  : becomes push 10001006.
+  :
+  cat ../../image - <<EOI | $* >'valid 6 55 68 06 10 00 10 e9 fb 0f 00 f0'
+    function 1000 1010
+    byte 1000 55 e8 00 00 00 00 58 90
+    EOI
+
+  : other
+  :
+  : Test a call to any other target that is refused as a branch.
+  :
+  cat ../../image - <<EOI | $* >'branch'
+    function 1000 1010
+    byte 1000 e8 fb 0e 00 00 90 90 90 90 90
+    EOI
+}}
+
+: size
+:
+: Test a function that is too short for the 5-byte jump.
+:
+cat ../image - <<EOI | $* >'size'
+  function 1000 1004
+  EOI
+
+: decode
+:
+{{
+  : invalid
+  :
+  : Test an instruction that HDE rejects (lock nop).
+  :
+  cat ../../image - <<EOI | $* >'decode'
+    function 1000 1010
+    byte 1000 f0 90
+    EOI
+
+  : long
+  :
+  : Test an instruction that is longer than 15 bytes.
+  :
+  cat ../../image - <<EOI | $* >'decode'
+    function 1000 1020
+    byte 1000 90 90 90 90 66 66 66 66 66 66 66 2e
+    byte 100c 0f 1f 84 00 00 00 00 00 90
+    EOI
+
+  : overrun
+  :
+  : Test sub esp, 100 extending past the function end.
+  :
+  cat ../../image - <<EOI | $* >'decode'
+    function 1000 1006
+    byte 1000 90 81 ec 00 01 00 00
+    EOI
+
+  : segment-end
+  :
+  : Test a call that ends past the function and its segment, which is
+  : followed by an inaccessible segment. Make sure the decoder reads only
+  : the padded copy.
+  :
+  test.arguments = 1ff8 10000000 20000000;
+  cat ../../image - <<EOI | $* >'decode'
+    segment - 2000 1000
+    function 1ff8 2000
+    byte 1ff8 90 90 90 90 90 90 90 e8
+    EOI
+
+  : rest
+  :
+  : Test an undecodable instruction past the overwritten ones.
+  :
+  cat ../../image - <<EOI | $* >'decode'
+    function 1000 1010
+    byte 1000 55 89 e5 57 56 90 f0 90
+    EOI
+
+  : ud2
+  :
+  : Test ud2, which HDE marks as invalid and which we accept.
+  :
+  cat ../../image - <<EOI | $* >'valid 5 55 89 e5 57 56 e9 fb 0f 00 f0'
+    function 1000 1010
+    byte 1000 55 89 e5 57 56 90 0f 0b
+    EOI
+
+  : ud2-prefix
+  :
+  : Test ud2 with a prefix, which we refuse.
+  :
+  cat ../../image - <<EOI | $* >'decode'
+    function 1000 1010
+    byte 1000 55 89 e5 57 56 66 0f 0b
+    EOI
+}}
+
+: branch
+:
+: Test control transfers among the overwritten instructions.
+:
+{{
+  : jmp
+  :
+  : Test a jmp (for example, an existing detour).
+  :
+  cat ../../image - <<EOI | $* >'branch'
+    function 1000 1010
+    byte 1000 e9 00 01 00 00 90 90 90 90 90
+    EOI
+
+  : jcc
+  :
+  cat ../../image - <<EOI | $* >'branch'
+    function 1000 1010
+    byte 1000 85 c0 74 10 90 90 90 90
+    EOI
+
+  : ret
+  :
+  cat ../../image - <<EOI | $* >'branch'
+    function 1000 1010
+    byte 1000 31 c0 c3 90 90 90
+    EOI
+
+  : indirect
+  :
+  cat ../../image - <<EOI | $* >'branch'
+    function 1000 1010
+    byte 1000 ff 25 00 20 00 00 90 90 90 90
+    EOI
+
+  : int3
+  :
+  : Test an int3 (for example, a breakpoint).
+  :
+  cat ../../image - <<EOI | $* >'branch'
+    function 1000 1010
+    byte 1000 cc 90 90 90 90 90
+    EOI
+
+  : ud2
+  :
+  cat ../../image - <<EOI | $* >'branch'
+    function 1000 1010
+    byte 1000 0f 0b 90 90 90 90
+    EOI
+}}
+
+: entry
+:
+: Test branches from the rest of the function into the overwritten
+: instructions.
+:
+{{
+  : rel8
+  :
+  cat ../../image - <<EOI | $* >'entry'
+    function 1000 1020
+    byte 1000 55 89 e5 57 56 90
+    byte 1010 eb f0
+    EOI
+
+  : rel32
+  :
+  cat ../../image - <<EOI | $* >'entry'
+    function 1000 1020
+    byte 1000 55 89 e5 57 56 90
+    byte 1010 0f 84 ec ff ff ff
+    EOI
+
+  : first
+  :
+  : Test a branch to the function start, which is accepted.
+  :
+  cat ../../image - <<EOI | $* >'valid 5 55 89 e5 57 56 e9 fb 0f 00 f0'
+    function 1000 1020
+    byte 1000 55 89 e5 57 56 90
+    byte 1010 eb ee
+    EOI
+
+  : past
+  :
+  cat ../../image - <<EOI | $* >'valid 5 55 89 e5 57 56 e9 fb 0f 00 f0'
+    function 1000 1020
+    byte 1000 55 89 e5 57 56 90
+    byte 1010 eb f3
+    EOI
+
+  : rel16
+  :
+  : Test a branch with the operand size prefix. The CPU truncates the target
+  : to 16 bits, which yields 1002 and targets the overwritten instructions
+  : only with the image loaded at 0.
+  :
+  {{
+    +cat ../../image - <<EOI >=image
+      function 1000 1020
+      byte 1000 55 89 e5 57 56 90
+      byte 1010 66 e9 ee ff
+      EOI
+
+    : zero
+    :
+    test.arguments = 1000 0 20000000;
+    $* <=../image >'entry'
+
+    : base
+    :
+    $* <=../image >'valid 5 55 89 e5 57 56 e9 fb 0f 00 f0'
+  }}
+}}
+
+: jump
+:
+{{
+  test.arguments = --jump
+
+  : forward
+  :
+  $* 10001000 20000000 >'e9 fb ef ff 0f'
+
+  : wraparound
+  :
+  $* ffffff00 100 >'e9 fb 01 00 00'
+}}
