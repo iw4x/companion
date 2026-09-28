@@ -1,0 +1,6 @@
+# Map each contributor's identities to one preferred name and address for
+# git shortlog and AUTHORS. Add an entry whenever a contributor has committed
+# under more than one name or address.
+#
+# See gitmailmap(5) for the format.
+#
