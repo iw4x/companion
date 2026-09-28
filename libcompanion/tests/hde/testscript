@@ -1,0 +1,192 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+: i386
+:
+{{
+  test.arguments += 32
+
+  : one-byte
+  :
+  $* 90 >'1'
+
+  : modrm
+  :
+  : Test mov ebp, esp.
+  :
+  $* 8b ec >'2 modrm'
+
+  : call
+  :
+  $* e8 10 00 00 00 >>EOO
+    5 imm32 relative
+    imm 10
+    EOO
+
+  : jmp-short
+  :
+  $* eb fe >>EOO
+    2 imm8 relative
+    imm fe
+    EOO
+
+  : jcc
+  :
+  $* 0f 84 10 00 00 00 >>EOO
+    6 imm32 relative
+    imm 10
+    EOO
+
+  : jmp-operand-size
+  :
+  : Test that the operand size prefix makes a relative jump rel16.
+  :
+  $* 66 e9 10 00 >>EOO
+    4 imm16 relative prefix-66
+    imm 10
+    EOO
+
+  : imm32
+  :
+  $* b8 78 56 34 12 >>EOO
+    5 imm32
+    imm 12345678
+    EOO
+
+  : imm16
+  :
+  $* 66 b8 34 12 >>EOO
+    4 imm16 prefix-66
+    imm 1234
+    EOO
+
+  : sib
+  :
+  : Test lea eax, [esp+8].
+  :
+  $* 8d 44 24 08 >>EOO
+    4 modrm sib disp8
+    disp 8
+    EOO
+
+  : disp32
+  :
+  : Test mov ecx, [1000].
+  :
+  $* 8b 0d 00 10 00 00 >>EOO
+    6 modrm disp32
+    disp 1000
+    EOO
+
+  : lock
+  :
+  $* f0 01 00 >'3 modrm prefix-lock'
+
+  : error
+  :
+  {{
+    : opcode
+    :
+    : Test that ud2 is reported as an invalid opcode (see detour.cxx).
+    :
+    $* 0f 0b >'2 error error-opcode'
+
+    : lock
+    :
+    : Test lock with a register operand.
+    :
+    $* f0 01 c0 >'3 modrm error error-lock prefix-lock'
+
+    : operand
+    :
+    : Test mov with a segment register number above 5.
+    :
+    $* 8c f8 >'2 modrm error error-operand'
+
+    : length
+    :
+    : Test an instruction longer than 15 bytes.
+    :
+    $* 2e 2e 2e 2e 2e 2e 2e 2e 2e 2e 2e 2e 2e 2e 2e 90 >>EOO
+      15 error error-length prefix-seg
+      EOO
+  }}
+}}
+
+: x86-64
+:
+{{
+  test.arguments += 64
+
+  : rex
+  :
+  : Test pop r12.
+  :
+  $* 41 5c >'2 prefix-rex'
+
+  : imm64
+  :
+  : Test mov rax, imm64.
+  :
+  $* 48 b8 88 77 66 55 44 33 22 11 >>EOO
+    10 imm64 prefix-rex
+    imm 1122334455667788
+    EOO
+
+  : moffs
+  :
+  : Test mov eax, [moffs64].
+  :
+  $* a1 88 77 66 55 44 33 22 11 >>EOO
+    9 imm64
+    imm 1122334455667788
+    EOO
+
+  : rip-relative
+  :
+  : Test mov rax, [rip+10].
+  :
+  $* 48 8b 05 10 00 00 00 >>EOO
+    7 modrm disp32 prefix-rex
+    disp 10
+    EOO
+
+  : call
+  :
+  $* e8 10 00 00 00 >>EOO
+    5 imm32 relative
+    imm 10
+    EOO
+
+  : rep
+  :
+  $* f3 c3 >'2 prefix-repx'
+
+  : error
+  :
+  {{
+    : rex
+    :
+    : Test that a second REX prefix is reported as an invalid opcode.
+    :
+    $* 48 48 90 >'2 error error-opcode prefix-rex'
+
+    : length
+    :
+    $* 2e 2e 2e 2e 2e 2e 2e 2e 2e 2e 2e 2e 2e 2e 2e 90 >>EOO
+      15 error error-length prefix-seg
+      EOO
+  }}
+}}
+
+: invalid
+:
+{{
+  : mode
+  :
+  $* 16 90 2>"error: invalid mode '16'" == 2
+
+  : byte
+  :
+  $* 32 1ff 2>"error: invalid byte '1ff'" == 2
+}}
