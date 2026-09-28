@@ -4,7 +4,7 @@ are never distributed (see ../../buildfile).
 glibc-symbols
 
   Generate the glibc compatibility header of the Linux companion module
-  (libcompanion/libcompanion/glibc-linux.hxx) for a glibc floor. Regenerate
+  (libcompanion/libcompanion/glibc.hxx) for a glibc floor. Regenerate
   it when the floor changes.
 
 steam-restart

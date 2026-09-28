@@ -7,7 +7,8 @@ impl_libs = # Implementation dependencies.
 windows = ($cxx.target.class == 'windows')
 
 # The library excludes Companion modules' platform code (*-win32 and
-# *-linux), which keeps it platform-independent and testable on any host.
+# *-linux) along with the Linux module's glibc floor definitions (glibc),
+# which keeps it platform-independent and testable on any host.
 #
 # The library also contains the vendored MinHook (see LEGAL). Its
 # instruction length decoder (HDE) is portable and built for every target.
@@ -16,7 +17,7 @@ windows = ($cxx.target.class == 'windows')
 # Windows module uses, is only built for Windows targets.
 #
 ./: lib{companion}: libul{companion}: \
-  {hxx ixx txx cxx}{** -version -*-win32 -*-linux} \
+  {hxx ixx txx cxx}{** -version -*-win32 -*-linux -glibc} \
   hxx{version} minhook/{h c}{hde32 hde64} minhook/h{table32 table64} \
   $impl_libs $intf_libs
 
@@ -77,7 +78,7 @@ x86_64 = ($cxx.target.cpu == 'x86_64')
 
 ./: libs{iw4x-steam}: include = ($linux && $i386)
 
-libs{iw4x-steam}: {hxx txx cxx}{*-linux} libul{companion}
+libs{iw4x-steam}: {hxx txx cxx}{*-linux} {hxx cxx}{glibc} libul{companion}
 {
   bin.lib.suffix = ''
   install        = lib/iw4x-steam/i686/
@@ -135,9 +136,9 @@ if $windows
 #
 libs{iw4x-steam}: file{iw4x-steam.map}: include = adhoc
 
-# Verify the module's glibc symbol versions (see glibc-linux.cxx).
+# Verify the module's glibc symbol versions (see glibc.cxx).
 #
-libs{iw4x-steam}: testscript{glibc-linux}
+libs{iw4x-steam}: testscript{glibc}
 
 if ($linux && $i386)
 {
@@ -161,12 +162,12 @@ objs{*}: cxx.poptions += -DLIBCOMPANION_SHARED_BUILD
 # is compiled with hidden visibility. On i386 this makes calls and data
 # references to its own symbols bypass the GOT and the PLT.
 #
-# The module's code also includes glibc-linux.hxx, which binds its glibc
-# references to the versions available in glibc 2.36 (see glibc-linux.cxx).
+# The module's code also includes glibc.hxx, which binds its glibc
+# references to the versions available in glibc 2.36 (see glibc.cxx).
 #
-objs{*-linux}:
+objs{*-linux glibc}:
 {
-  cxx.poptions += -include "$src_base/glibc-linux.hxx"
+  cxx.poptions += -include "$src_base/glibc.hxx"
   cxx.coptions += -fvisibility=hidden
 }
 
@@ -206,7 +207,7 @@ else
 # Note: we use patterns since naming a target here would declare it in the
 # output directory, hiding the source file.
 #
-{hxx txx}{*-win32 *-linux}: install = false
+{hxx txx}{*-win32 *-linux glibc*}: install = false
 
 h{buffer* trampoline* table*}: install = false
 

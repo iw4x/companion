@@ -6,7 +6,7 @@
 // The module runs in the Steam client on any host, so it can only depend on
 // what the oldest supported glibc provides. This floor is glibc 2.36, which
 // is the version in Debian 12, the oldest Debian release with long-term
-// support. For our own code glibc-linux.hxx (which every translation unit of
+// support. For our own code glibc.hxx (which every translation unit of
 // the module includes first) binds each reference to a version available at
 // the floor.
 //
@@ -18,7 +18,7 @@
 // at link time and require nothing from glibc at runtime.
 //
 // If the module requires anything else, then the floor test fails (see
-// glibc-linux.testscript) and the missing definition should be added here.
+// glibc.testscript) and the missing definition should be added here.
 //
 #include <cctype> // isspace()
 #include <cerrno>

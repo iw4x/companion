@@ -1,7 +1,7 @@
 # Copyright (c) the IW4x authors (see the AUTHORS file).
 # SPDX-License-Identifier: GPL-3.0-only
 
-# glibc floor test (see glibc-linux.cxx). Print the module's dynamic symbols
+# glibc floor test (see glibc.cxx). Print the module's dynamic symbols
 # with versions above GLIBC_2.36. The expected output is empty.
 #
 # Note that objdump is part of binutils, which the toolchain includes.
