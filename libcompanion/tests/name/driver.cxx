@@ -73,7 +73,7 @@ try
     throw runtime_error ("invalid arguments");
 
   string        m (argv[1]);
-  std::uint32_t k (static_cast<std::uint32_t> (stoul (argv[2])));
+  uint32_t k (static_cast<uint32_t> (stoul (argv[2])));
   process_id    p (static_cast<process_id> (k));
 
   if      (m == "record")      cout << narrow (record_name (p).data ());

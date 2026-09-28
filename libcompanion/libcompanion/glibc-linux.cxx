@@ -25,6 +25,8 @@
 
 #include <libcompanion/contract.hxx>
 
+using namespace std;
+
 // C17 strtoul() under its own name. The <cstdlib> declaration is redirected
 // to __isoc23_strtoul() in glibc 2.38 and later, which is defined below.
 //
@@ -50,7 +52,7 @@ extern "C"
     {
       const char* p (s);
 
-      while (std::isspace (static_cast<unsigned char> (*p)))
+      while (isspace (static_cast<unsigned char> (*p)))
         ++p;
 
       bool minus (*p == '-');

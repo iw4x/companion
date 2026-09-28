@@ -3,6 +3,8 @@
 
 #include <libcompanion/name.hxx>
 
+using namespace std;
+
 namespace companion
 {
   object_name
