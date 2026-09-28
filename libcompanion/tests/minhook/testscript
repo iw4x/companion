@@ -59,6 +59,17 @@ $* errors >>EOO
   uninitialize MH_OK
   EOO
 
+: unmapped
+:
+: Test that an address the system cannot query is not executable.
+:
+$* unmapped >>EOO
+  initialize MH_OK
+  create-target MH_ERROR_NOT_EXECUTABLE
+  create-detour MH_ERROR_NOT_EXECUTABLE
+  uninitialize MH_OK
+  EOO
+
 : all
 :
 $* all >>EOO

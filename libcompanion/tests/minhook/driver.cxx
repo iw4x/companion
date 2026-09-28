@@ -11,6 +11,7 @@
 
 #include <atomic>
 #include <string>
+#include <cstdint>
 #include <iostream>
 #include <stdexcept> // runtime_error
 
@@ -32,6 +33,7 @@
 // not-initialized  call each function before initializing
 // hook             hook a function, call it enabled and disabled
 // errors           the errors of the hook state changes
+// unmapped         hook an address outside the address space
 // all              enable and disable all the hooks at once
 // queue            queue changes and apply them at once
 // api              hook an exported function by name
@@ -177,6 +179,20 @@ errors ()
   print ("enable-enabled", mh_enable_hook (address (&target_a)));
   print ("remove-enabled", mh_remove_hook (address (&target_a)));
   print ("call-removed", target_a (5));
+  print ("uninitialize", mh_uninitialize ());
+}
+
+// The highest 64K-aligned address is outside the user address space on
+// both x86 and x64, so querying it fails.
+//
+static void
+unmapped ()
+{
+  void* a (reinterpret_cast<void*> (~uintptr_t (0) & ~uintptr_t (0xffff)));
+
+  print ("initialize", mh_initialize ());
+  print ("create-target", mh_create_hook (a, address (&detour_a), nullptr));
+  print ("create-detour", mh_create_hook (address (&target_a), a, nullptr));
   print ("uninitialize", mh_uninitialize ());
 }
 
@@ -334,6 +350,7 @@ try
   else if (s == "not-initialized") not_initialized ();
   else if (s == "hook")            hook ();
   else if (s == "errors")          errors ();
+  else if (s == "unmapped")        unmapped ();
   else if (s == "all")             all ();
   else if (s == "queue")           queue ();
   else if (s == "api")             api ();
