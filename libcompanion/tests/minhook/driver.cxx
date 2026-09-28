@@ -12,6 +12,7 @@
 #include <atomic>
 #include <string>
 #include <cstdint>
+#include <cstring>   // memcpy()
 #include <iostream>
 #include <stdexcept> // runtime_error
 
@@ -34,6 +35,8 @@
 // hook             hook a function, call it enabled and disabled
 // errors           the errors of the hook state changes
 // unmapped         hook an address outside the address space
+// address-size-rip hook code that starts with an x64 RIP-relative
+//                  instruction with the address size prefix
 // all              enable and disable all the hooks at once
 // queue            queue changes and apply them at once
 // api              hook an exported function by name
@@ -196,6 +199,28 @@ unmapped ()
   print ("uninitialize", mh_uninitialize ());
 }
 
+// The code is mov eax, [eip+0] (the address size prefix makes the x64
+// RIP-relative form EIP-relative) followed by ret.
+//
+static void
+address_size_rip ()
+{
+  const uint8_t c[] {0x67, 0x8b, 0x05, 0x00, 0x00, 0x00, 0x00, 0xc3};
+
+  void* p (VirtualAlloc (nullptr,
+                         4096,
+                         MEM_COMMIT | MEM_RESERVE,
+                         PAGE_EXECUTE_READWRITE));
+  assert (p != nullptr);
+  memcpy (p, c, sizeof (c));
+
+  print ("initialize", mh_initialize ());
+  print ("create", mh_create_hook (p, address (&detour_a), nullptr));
+  print ("uninitialize", mh_uninitialize ());
+
+  VirtualFree (p, 0, MEM_RELEASE);
+}
+
 static void
 all ()
 {
@@ -346,17 +371,18 @@ try
 
   string s (argv[1]);
 
-  if      (s == "initialize")      initialize ();
-  else if (s == "not-initialized") not_initialized ();
-  else if (s == "hook")            hook ();
-  else if (s == "errors")          errors ();
-  else if (s == "unmapped")        unmapped ();
-  else if (s == "all")             all ();
-  else if (s == "queue")           queue ();
-  else if (s == "api")             api ();
-  else if (s == "threads")         threads ();
-  else if (s == "uninitialize")    uninitialize ();
-  else if (s == "strings")         strings ();
+  if      (s == "initialize")       initialize ();
+  else if (s == "not-initialized")  not_initialized ();
+  else if (s == "hook")             hook ();
+  else if (s == "errors")           errors ();
+  else if (s == "unmapped")         unmapped ();
+  else if (s == "address-size-rip") address_size_rip ();
+  else if (s == "all")              all ();
+  else if (s == "queue")            queue ();
+  else if (s == "api")              api ();
+  else if (s == "threads")          threads ();
+  else if (s == "uninitialize")     uninitialize ();
+  else if (s == "strings")          strings ();
   else
     throw runtime_error ("invalid scenario '" + s + '\'');
 

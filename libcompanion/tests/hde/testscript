@@ -177,6 +177,14 @@
       15 error error-length prefix-seg
       EOO
   }}
+
+  : address-size-rip
+  :
+  : Test that the address size prefix is decoded as 16-bit addressing, which
+  : has no displacement for this ModR/M. The trampoline builder relies on
+  : this to refuse such an instruction (see trampoline.c).
+  :
+  $* 67 8b 05 10 00 00 00 >'3 modrm prefix-67'
 }}
 
 : invalid

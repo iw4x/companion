@@ -70,6 +70,20 @@ $* unmapped >>EOO
   uninitialize MH_OK
   EOO
 
+: address-size-rip
+:
+: Test that an x64 RIP-relative instruction with the address size prefix is
+: refused. HDE decodes it without a displacement (see trampoline.c).
+:
+if ($cxx.target.cpu == 'x86_64')
+{
+  $* address-size-rip >>EOO
+    initialize MH_OK
+    create MH_ERROR_UNSUPPORTED_FUNCTION
+    uninitialize MH_OK
+    EOO
+}
+
 : all
 :
 $* all >>EOO
