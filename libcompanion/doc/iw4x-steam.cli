@@ -50,8 +50,8 @@ namespace companion
      [iw4x-steam] active (build 2)
      \
 
-     See the \cb{companion} manual for details on how the companion works and
-     on the other diagnostics that it issues.
+     See \l{companion The \cb{companion} Manual} for details on how the
+     companion works and on the other diagnostics that it issues.
 
      \h|ENVIRONMENT|
 

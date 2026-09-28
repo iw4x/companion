@@ -52,6 +52,13 @@ if $develop
   doc_options = -v project=companion -v version=$version       \
                 -v copyright='the IW4x authors' -v date="$doc_date" \
                 --suppress-undocumented
+
+  # The man page refers to the manual as companion (see iw4x-steam.cli),
+  # which becomes a link in the HTML version and plain text in the man
+  # version.
+  #
+  man_links  = --link-regex '%companion(#.+)?%$1%'
+  html_links = --link-regex '%companion(#.+)?%libcompanion-manual.xhtml$1%'
 }
 
 # In the development build distribute the generated versions, remapping their
@@ -77,6 +84,7 @@ if $develop
   diag 'cli --man' ($<[0]) -> $>
 
   $cli $doc_options --generate-man --ascii-tree \
+    $man_links                                           \
     --man-prologue-file $path($<[1])                     \
     --man-epilogue-file $path($<[2])                     \
     --stdout $path($<[0]) >$path($>)
@@ -90,6 +98,7 @@ if $develop
   diag 'cli --html' ($<[0]) -> $>
 
   $cli $doc_options --generate-html --html-suffix .xhtml \
+    $html_links                                          \
     --html-prologue-file $path($<[1])                    \
     --html-epilogue-file $path($<[2])                    \
     --stdout $path($<[0]) >$path($>)
