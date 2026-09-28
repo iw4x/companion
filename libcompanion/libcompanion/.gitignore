@@ -2,8 +2,6 @@
 #
 version.hxx
 
-# Unit test executables and Testscript output directories
-# (can be symlinks).
+# Testscript output directory (can be symlink).
 #
-*.test
-test-*.test
+test-iw4x-steam

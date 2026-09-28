@@ -38,7 +38,7 @@
 //
 //   Truncate the image to the size.
 //
-namespace elf_test
+namespace elf_builder
 {
   using namespace std;
   using namespace companion;

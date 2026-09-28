@@ -14,7 +14,7 @@
 #include <libcompanion/endian.hxx>
 #include <libcompanion/locate.hxx>
 
-#include <libcompanion/elf.test.hxx>
+#include <common/elf-builder.hxx>
 
 #undef NDEBUG
 #include <cassert>
@@ -58,7 +58,8 @@
 // The function table and unwind information are placed into an additional
 // data section after the last described one.
 //
-// The ELF image commands are those of elf.test.hxx plus the following:
+// The ELF image commands are those of common/elf-builder.hxx plus the
+// following:
 //
 // anchor <address>
 // string <address> <text>
@@ -430,19 +431,19 @@ register_number (const string& s)
 }
 
 static void
-add_write (elf_test::description& d, uint32_t a, const buffer& b)
+add_write (elf_builder::description& d, uint32_t a, const buffer& b)
 {
-  d.writes.push_back (elf_test::write_item {a, b});
+  d.writes.push_back (elf_builder::write_item {a, b});
 }
 
 // Parse the ELF image description line if it is one of the commands
 // specific to this test. Return false otherwise.
 //
 static bool
-parse_i386 (elf_test::description& d, const words& w)
+parse_i386 (elf_builder::description& d, const words& w)
 {
-  using elf_test::arity;
-  using elf_test::hex_number;
+  using elf_builder::arity;
+  using elf_builder::hex_number;
 
   const string& c (w[0]);
 
@@ -514,17 +515,17 @@ parse_i386 (elf_test::description& d, const words& w)
 static locate_result
 locate_elf ()
 {
-  elf_test::description d;
+  elf_builder::description d;
 
   for (string l; getline (cin, l); )
   {
-    words w (elf_test::split (l));
+    words w (elf_builder::split (l));
 
-    if (!w.empty () && !parse_i386 (d, w) && !elf_test::parse (d, w))
+    if (!w.empty () && !parse_i386 (d, w) && !elf_builder::parse (d, w))
       throw runtime_error ("invalid command '" + w[0] + '\'');
   }
 
-  buffer b (elf_test::build (d));
+  buffer b (elf_builder::build (d));
 
   elf_image x;
   elf_outcome o (parse_elf (bytes (b), x));

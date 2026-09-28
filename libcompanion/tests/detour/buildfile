@@ -1,0 +1,9 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+import libs = libcompanion%lib{companion}
+
+exe{driver}: {hxx ixx txx cxx}{**} ../common/hxx{elf-builder} $libs \
+  testscript
+
+cxx.poptions =+ "-I$src_root"

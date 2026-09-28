@@ -1,4 +1,7 @@
 # Copyright (c) the IW4x authors (see the AUTHORS file).
 # SPDX-License-Identifier: GPL-3.0-only
 
-./: {*/ -build/}
+# The common/ subdirectory contains headers that are shared by several tests
+# and is not a test itself.
+#
+./: {*/ -build/ -common/}

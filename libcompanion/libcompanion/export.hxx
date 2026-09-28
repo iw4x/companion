@@ -22,8 +22,8 @@
 #  define LIBCOMPANION_SYMEXPORT
 #else
 // If none of the above macros are defined, then we assume we are being used
-// by a unit test (which links the utility library) or by some third-party
-// build system that cannot/doesn't signal the library type.
+// by some third-party build system that cannot/doesn't signal the library
+// type.
 //
 #  define LIBCOMPANION_SYMEXPORT         // Using static or shared.
 #endif

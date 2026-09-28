@@ -5,13 +5,13 @@
 
 #include <libcompanion/elf.hxx>
 
-#include <libcompanion/elf.test.hxx>
+#include <common/elf-builder.hxx>
 
 // Usage: argv[0] [<address>...]
 //
-// Read the image description from stdin (see elf.test.hxx), build the
-// mapped i386 ELF32 shared object, parse it, and print the result in the
-// following format:
+// Read the image description from stdin (see common/elf-builder.hxx),
+// build the mapped i386 ELF32 shared object, parse it, and print the result
+// in the following format:
 //
 // <outcome> <size>
 //
@@ -21,7 +21,7 @@
 //
 using namespace std;
 using namespace companion;
-using namespace elf_test;
+using namespace elf_builder;
 
 int
 main (int argc, char* argv[])

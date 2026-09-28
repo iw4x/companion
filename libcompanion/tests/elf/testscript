@@ -4,7 +4,7 @@
 # Each image has a code segment at 1000 and a data segment at 2000. With
 # these segments the program headers are at 34 (headers), 54 (code), 74
 # (data), 94 (unwind), and b4 (PT_GNU_EH_FRAME) and .eh_frame_hdr is at 3000
-# (see elf.test.hxx for the layout).
+# (see common/elf-builder.hxx for the layout).
 #
 # For a single function .eh_frame starts at 3014 and contains the "zR" CIE
 # (3014), the "zPLR" CIE (3028), and the FDE (3044).

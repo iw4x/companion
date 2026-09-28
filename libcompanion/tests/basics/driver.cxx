@@ -11,7 +11,7 @@
 #include <cassert>
 
 // Installed library smoke test. Include the public headers and call a few
-// functions. The unit tests cover the functionality.
+// functions. The other tests in this subproject cover the functionality.
 //
 int
 main ()

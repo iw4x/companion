@@ -22,7 +22,7 @@
 #include <libcompanion/elf.hxx>
 #include <libcompanion/detour.hxx>
 
-#include <libcompanion/elf.test.hxx>
+#include <common/elf-builder.hxx>
 
 #undef NDEBUG
 #include <cassert>
@@ -33,10 +33,10 @@
 // argv[0] --jump <from> <to>
 //
 // In the first form read the image description from stdin (see
-// elf.test.hxx), build the mapped i386 ELF32 shared object, and build the
-// trampoline for the function that starts at <function> given the image
-// load address <base> and the trampoline address <trampoline>. Then print
-// the result in the following format:
+// common/elf-builder.hxx), build the mapped i386 ELF32 shared object, and
+// build the trampoline for the function that starts at <function> given the
+// image load address <base> and the trampoline address <trampoline>. Then
+// print the result in the following format:
 //
 // <outcome> [<replaced> <code>...]
 //
@@ -54,7 +54,7 @@
 //
 using namespace std;
 using namespace companion;
-using namespace elf_test;
+using namespace elf_builder;
 
 static void
 print (const uint8_t* p, size_t n)
