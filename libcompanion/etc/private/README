@@ -1,5 +1,5 @@
 This directory contains maintainer scripts for working on Companion. They
-are not part of the package and are never distributed.
+are never distributed (see ../../buildfile).
 
 glibc-symbols
 
@@ -15,8 +15,8 @@ steam-restart
   then shut the client down, start it through the module's launcher, and
   wait for Companion to settle. For example:
 
-  etc/private/steam-restart --install ../companion-gcc32 \
-                            --install ../companion-gcc
+  libcompanion/etc/private/steam-restart --install ../companion-gcc32 \
+                                         --install ../companion-gcc
 
 Note that both scripts are for Linux. See the comments at the beginning of
 each for the details.

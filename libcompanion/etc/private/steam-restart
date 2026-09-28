@@ -19,8 +19,8 @@
 #   launcher) and the x86_64 configuration (the module's 64-bit stand-in).
 #   For example:
 #
-#   etc/private/steam-restart --install ../companion-gcc32 \
-#                             --install ../companion-gcc
+#   libcompanion/etc/private/steam-restart --install ../companion-gcc32 \
+#                                          --install ../companion-gcc
 #
 # --prefix <dir>
 #

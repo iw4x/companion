@@ -30,8 +30,8 @@ subproject, which has a directory with a `driver.cxx` and a `testscript` for
 each tested unit, as well as the `basics/` smoke test. Since each module is
 built only for its own target, a change to the platform code needs the
 configuration for that target (see the Development section of the README
-for all three). The maintainer scripts in `etc/private/` are not part of the
-package.
+for all three). The maintainer scripts in `libcompanion/etc/private/` are
+never distributed.
 
 Work on a branch of your fork of the repository and keep it up to date with
 `main` by rebasing it. The history is linear, so a branch with merge commits

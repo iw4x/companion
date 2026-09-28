@@ -115,13 +115,13 @@ restarts the Steam client with the launcher. It then prints the diagnostics
 of Companion:
 
 ```sh
-etc/private/steam-restart         \
-  --install ../companion-gcc32    \
+libcompanion/etc/private/steam-restart \
+  --install ../companion-gcc32          \
   --install ../companion-gcc
 ```
 
 For the options of this and the other maintainer scripts see the comments
-at the beginning of each script in `etc/private/`.
+at the beginning of each script in `libcompanion/etc/private/`.
 
 The library checks its preconditions and assertions by default. To also
 check its postconditions and invariants, configure it with the audit
