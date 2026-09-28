@@ -3,14 +3,14 @@
 # Copyright (c) the IW4x authors (see the AUTHORS file).
 # SPDX-License-Identifier: GPL-3.0-only
 
-# Restart the Linux Steam client with the companion module loaded.
+# Restart the Linux Steam client with Companion module loaded.
 #
 # The Steam client only loads the module at startup (see
 # libcompanion/libcompanion/host-linux.cxx), so testing a module build
 # requires a client restart. This script shuts down the running client (if
 # any), starts it detached through the module's launcher (iw4x-steam), waits
-# for the companion to settle, and prints its diagnostics. The exit code is
-# 0 if the companion is active and 1 otherwise.
+# for Companion to settle, and prints its diagnostics. The exit code is
+# 0 if Companion is active and 1 otherwise.
 #
 # --install <config>
 #
@@ -28,7 +28,7 @@
 #
 # --timeout <seconds>
 #
-#   Maximum time to wait for the client to exit and then for the companion
+#   Maximum time to wait for the client to exit and then for Companion
 #   to settle (120 by default). The script never kills the client and fails
 #   if it doesn't exit on its own.
 #
@@ -90,7 +90,7 @@ uid="$(id -u)"
 status="/dev/shm/iw4x-steam-companion.$uid"
 launcher="$prefix/bin/iw4x-steam"
 
-# The client writes its output (including the companion's diagnostics) to
+# The client writes its output (including Companion's diagnostics) to
 # its log file.
 #
 if [ -d "$HOME/.steam/steam/logs" ]; then
@@ -159,7 +159,7 @@ offset="$(stat -c %s "$console" 2>/dev/null || echo 0)"
 info "starting Steam through $launcher"
 setsid "$launcher" "$@" >"$log" 2>&1 </dev/null &
 
-# Wait for the companion to settle (publish a state other than starting;
+# Wait for Companion to settle (publish a state other than starting;
 # see libcompanion/libcompanion/protocol.hxx) in a running Steam client. A
 # client removes its status on exit and a crashed client leaves a stale
 # status, which refers to a process that has exited (or to an unrelated
@@ -191,7 +191,7 @@ for ((i = 0; i != timeout; ++i)); do
   sleep 1
 done
 
-# Print the companion's diagnostics written since the client restart. If
+# Print Companion's diagnostics written since the client restart. If
 # the log is shorter than before, then the client started a new one and we
 # print all of it.
 #

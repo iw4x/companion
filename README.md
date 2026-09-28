@@ -1,31 +1,15 @@
-# companion - Steam friends presence for IW4x.
+# Companion
 
-`companion` is a Steam client module that lets IW4x choose what your Steam
-friends see as the game you are playing, the line under your name in their
-friends list. The game sets this text, for example,
-`IW4x: Modern Warfare 2`, and can change it at any time while it runs.
-Without the companion, your friends see the Steam app that IW4x runs as
-(Call of Duty: Modern Warfare 2 or Spacewar) or, if you start the game from
-a non-Steam shortcut, the name of the shortcut. The companion is for IW4x
-players on Windows and on Linux, where it works with the native Linux Steam
-client running the game under Proton.
+Companion is a Steam client module that lets you choose what your Steam
+friends see as the game you are playing.
 
 <p>
   <img alt="Steam friends window showing IW4x: Modern Warfare 2 as the game"
        src=".github/steam-friends.png" width="320">
 </p>
 
-The companion runs inside the Steam client and intercepts the `GamesPlayed`
-message, with which the client reports the running games to Steam. In each
-entry that refers to a running IW4x process, it sets the text that friends
-see to the one that the game provides. It also sets the Steam app to one
-that the account owns, Call of Duty: Modern Warfare 2 or, if the account
-does not own it, Spacewar, which every account owns. Every other message is
-sent unchanged and no Steam or game files are modified.
-
-For details on how the companion works, including the protocol between the
-game and the companion, see the companion manual
-(`libcompanion/doc/manual.cli`).
+For details on how Companion works, including the protocol between the
+game and Companion, see Companion manual (`libcompanion/doc/manual.cli`).
 
 ## Development
 
@@ -34,7 +18,7 @@ appropriate for development. If you want to use `libcompanion` in your
 `build2`-based project, then see the package
 [`README.md`](libcompanion/README.md) file.
 
-The companion requires the `build2` toolchain 0.18.0 or later and GCC 16 or
+Companion requires the `build2` toolchain 0.18.0 or later and GCC 16 or
 later. Building the Linux module also requires the 32-bit glibc and
 libstdc++ development files (`glibc-devel.i686` and `libstdc++-devel.i686`
 on Fedora, for example). Building the Windows module requires MinGW-w64 GCC
@@ -128,7 +112,7 @@ Trying a build of the Linux module requires a restart of the Steam client,
 since the client only loads the module at startup. The `steam-restart`
 script installs the module from the `@gcc32` and `@gcc` configurations and
 restarts the Steam client with the launcher. It then prints the diagnostics
-of the companion:
+of Companion:
 
 ```sh
 etc/private/steam-restart         \

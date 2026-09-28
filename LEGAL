@@ -41,7 +41,7 @@ libcompanion/libcompanion/minhook/
   dependencies" rule (charter 2.2, rule 3; [PKG] 3.5), and it was granted as
   an explicit exception on 2026-09-27.
 
-  Reason: the companion is built for Windows (the 64-bit Steam client) and
+  Reason: Companion is built for Windows (the 64-bit Steam client) and
   for Linux (the 32-bit native Steam client). On Windows it uses MinHook as a
   whole. On Linux it uses only MinHook's instruction length decoder (HDE) for
   its own detour, which requires building HDE against a stand-in for
@@ -50,7 +50,7 @@ libcompanion/libcompanion/minhook/
   stand-in.
 
   Removal: the exception ends once a package provides HDE for every target
-  the companion is built for. The vendored copy is then deleted and replaced
+  Companion is built for. The vendored copy is then deleted and replaced
   with a depends: value.
 
   Updating: port the upstream changes since the version above into the

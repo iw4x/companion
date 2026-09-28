@@ -25,7 +25,7 @@ namespace companion
   //
   // The search and the parsing of the /proc file formats only depend on
   // the file contents. The caller provides the reading functions (see
-  // process_source): the Linux platform layer in the companion and a
+  // process_source): the Linux platform layer in Companion and a
   // process tree description in the tests.
   //
   // Every GamesPlayed report triggers a search on Steam's network thread.

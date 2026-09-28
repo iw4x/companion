@@ -7,7 +7,7 @@
 {{
   : starting
   :
-  : Test the initial status that the companion publishes.
+  : Test the initial status that Companion publishes.
   :
   $* status 99 starting 0 <:'' >'valid starting 2 0 99'
 

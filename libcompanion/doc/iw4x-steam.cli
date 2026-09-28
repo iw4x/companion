@@ -41,7 +41,7 @@ namespace companion
      processes that these programs start, including games and Proton, do not
      inherit it.
 
-     The companion writes its diagnostics to the Steam client's \cb{stderr},
+     Companion writes its diagnostics to the Steam client's \cb{stderr},
      which the client normally copies to its console log,
      \cb{~/.steam/steam/logs/console-linux.txt}. Each line starts with
      \cb{[iw4x-steam]} and a successful startup ends with a line like this:
@@ -73,7 +73,7 @@ namespace companion
 
      \li|\c{\i{prefix}\b{/lib/iw4x-steam/i686/libiw4x-steam.so}}
 
-     The companion module.|
+     Companion module.|
 
      \li|\c{\i{prefix}\b{/lib/iw4x-steam/x86_64/libiw4x-steam.so}}
 
@@ -82,7 +82,7 @@ namespace companion
 
      \li|\c{\b{/dev/shm/iw4x-steam-companion.}\i{uid}}
 
-     The companion status, which the game reads. The companion keeps the
+     Companion status, which the game reads. Companion keeps the
      file locked while it runs, so only one companion is active per user.||
 
      \h|EXIT STATUS|

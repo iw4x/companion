@@ -9,10 +9,10 @@
 // Game-companion protocol.
 //
 // The protocol is shared by three components: the game (the 32-bit
-// iw4x.dll), the companion in the 64-bit Windows Steam client, and the
+// iw4x.dll), Companion in the 64-bit Windows Steam client, and the
 // companion preloaded into the 32-bit native Linux Steam client (used when
 // the game runs under Proton). Each is built with its own toolchain for its
-// own architecture and each is upgraded on its own schedule. The companion
+// own architecture and each is upgraded on its own schedule. Companion
 // remains loaded until the Steam client exits, so any game version can
 // encounter any companion version.
 //
@@ -52,7 +52,7 @@ namespace companion
   // mapping lives while the game keeps a handle to it, so the record's
   // lifetime is bounded by the game process.
   //
-  // The game writes the magic last with release ordering and the companion
+  // The game writes the magic last with release ordering and Companion
   // reads it first with acquire ordering. As a result, a record with the
   // matching magic is always complete.
   //
@@ -122,10 +122,10 @@ namespace companion
 
   // Windows companion status.
   //
-  // The companion publishes the status in a named file mapping (see
+  // Companion publishes the status in a named file mapping (see
   // status_name_format) whose name includes the Steam process id. Creating
   // the mapping also ensures there is a single companion per Steam client.
-  // The companion stores the state field last with release ordering.
+  // Companion stores the state field last with release ordering.
   //
   inline constexpr std::uint32_t status_magic   (0x53345749); // "IW4S"
   inline constexpr std::uint32_t status_version (1);
@@ -190,7 +190,7 @@ namespace companion
   //
   // The record change event is an auto-reset event whose name includes the
   // Steam process id. The game sets it every time it publishes or updates
-  // its record, which allows the companion to resend a report that Steam
+  // its record, which allows Companion to resend a report that Steam
   // sent before the record was published.
   //
   inline constexpr const wchar_t* record_name_format (

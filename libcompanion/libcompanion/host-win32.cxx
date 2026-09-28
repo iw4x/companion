@@ -11,7 +11,7 @@
 // Inside the Steam client the startup sequence is: publish the starting
 // status (see protocol.hxx), find the send function in steamclient64.dll,
 // install the send hook, and start the record watcher (see hook-win32.hxx).
-// The companion is then idle until a game publishes its record.
+// Companion is then idle until a game publishes its record.
 //
 // Creating the status mapping also ensures there is a single companion per
 // Steam client. A second copy of the module (for example, from another game
@@ -94,7 +94,7 @@ namespace companion
     }
 
     // Keep the mapping even if the view cannot be mapped below so that no
-    // other copy of the module becomes the companion. The attach that
+    // other copy of the module becomes Companion. The attach that
     // loaded us then times out.
     //
     HANDLE h (release (m));
@@ -200,7 +200,7 @@ namespace companion
     return n != 0 && n < path_capacity && steam_image (wstring_view (p, n));
   }
 
-  // Pin the module and start the companion thread. This function is called
+  // Pin the module and start Companion thread. This function is called
   // with the loader lock held, which precludes doing any real work here.
   //
   static void
@@ -222,11 +222,11 @@ namespace companion
     auto_handle t (CreateThread (nullptr, 0, &run, nullptr, 0, nullptr));
 
     if (t.handle == nullptr)
-      diag ("unable to start the companion ({})", GetLastError ());
+      diag ("unable to start Companion ({})", GetLastError ());
   }
 }
 
-// Module entry point. Start the companion when loaded into the Steam client.
+// Module entry point. Start Companion when loaded into the Steam client.
 //
 extern "C" BOOL WINAPI
 DllMain (HINSTANCE m, DWORD reason, LPVOID)

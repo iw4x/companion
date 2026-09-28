@@ -10,14 +10,14 @@
 #include <libcompanion/types.hxx>
 #include <libcompanion/diagnostics.hxx>
 
-// Linux utilities shared by the parts of the companion module that run in
+// Linux utilities shared by the parts of Companion module that run in
 // the Steam client (host-linux.cxx, hook-linux.cxx, and process-linux.cxx).
 //
 namespace companion
 {
   // Diagnostics.
   //
-  // The diagnostics are written to stderr, which the companion shares with
+  // The diagnostics are written to stderr, which Companion shares with
   // the Steam client. It is the terminal Steam was started from or wherever
   // the Steam launcher redirects it.
   //
@@ -67,7 +67,7 @@ namespace companion
   // Start a detached thread that calls the function with the argument. On
   // failure, set errno and return false.
   //
-  // The thread blocks all the signals. The companion runs in the Steam
+  // The thread blocks all the signals. Companion runs in the Steam
   // client's process, so signals sent to the process are for the Steam
   // threads, which may rely on which threads can receive them.
   //

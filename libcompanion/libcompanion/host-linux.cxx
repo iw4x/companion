@@ -13,7 +13,7 @@
 // Inside the Steam client the startup sequence is: publish the starting
 // status (see protocol.hxx), wait for steamclient.so to load, find the send
 // function in it, install the send hook, and start the record watcher (see
-// hook-linux.hxx). The companion is then idle until a game publishes its
+// hook-linux.hxx). Companion is then idle until a game publishes its
 // record.
 //
 // The status file also ensures there is a single companion per user. The
@@ -87,7 +87,7 @@ namespace companion
 
   // Status file state.
   //
-  // The companion thread creates the status file and the exit handler
+  // Companion thread creates the status file and the exit handler
   // removes it. These can happen in either order since a client that exits
   // right after starting (for example, one that forwards its arguments to an
   // already running client) can exit while we are creating the file or
@@ -447,7 +447,7 @@ namespace companion
   }
 
   // Module constructor. The dynamic linker calls it before main(), which
-  // is no place for real work, so the companion runs on its own thread.
+  // is no place for real work, so Companion runs on its own thread.
   //
   [[gnu::constructor]] static void
   load () noexcept
@@ -460,7 +460,7 @@ namespace companion
     steam_process = current_process ();
 
     if (!start_thread (&run, nullptr))
-      diag ("unable to start the companion: {}", last_error ());
+      diag ("unable to start Companion: {}", last_error ());
   }
 
   // Module destructor. Remove the status file and prevent its creation if
@@ -468,7 +468,7 @@ namespace companion
   //
   // This only applies to the Steam client itself. The destructor also runs
   // in a forked child of the client that exits without exec'ing. Such a
-  // child must not even lock the mutex since the companion thread may have
+  // child must not even lock the mutex since Companion thread may have
   // held it at the time of the fork and nothing would then unlock it.
   //
   // Note that a crashed client leaves the file behind. The next companion

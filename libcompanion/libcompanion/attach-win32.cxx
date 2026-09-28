@@ -6,10 +6,10 @@
 // The 32-bit game starts the entry point in the 64-bit rundll32.exe since
 // only a 64-bit process can create a thread in the 64-bit Steam client (see
 // attach.hxx). The entry point loads this module into the Steam client by
-// running LoadLibraryW() on a remote thread and then waits for the companion
+// running LoadLibraryW() on a remote thread and then waits for Companion
 // to publish a settled state (see host-win32.cxx).
 //
-// If the companion is already running in the Steam client (for example,
+// If Companion is already running in the Steam client (for example,
 // from an earlier game session), then we report its state without loading
 // anything.
 //
@@ -29,7 +29,7 @@ using namespace std;
 
 namespace companion
 {
-  // Timeouts for the remote LoadLibraryW() call and for the companion to
+  // Timeouts for the remote LoadLibraryW() call and for Companion to
   // settle as well as the status polling interval, all in milliseconds.
   //
   static constexpr DWORD load_timeout   (10000);
@@ -46,7 +46,7 @@ namespace companion
                                          PROCESS_VM_READ           |
                                          PROCESS_VM_WRITE);
 
-  // If the companion in the Steam process has published a state other than
+  // If Companion in the Steam process has published a state other than
   // starting, then set the result and return true. Otherwise, return false.
   //
   static bool
@@ -62,7 +62,7 @@ namespace companion
     companion_status s;
     status_outcome   o (decode_status (bytes (b), p, s));
 
-    // The companion creates the mapping first and writes the status into it
+    // Companion creates the mapping first and writes the status into it
     // afterwards, so keep waiting.
     //
     if (o == status_outcome::magic)
@@ -83,7 +83,7 @@ namespace companion
     return true;
   }
 
-  // Poll the companion status until it settles or the timeout expires.
+  // Poll Companion status until it settles or the timeout expires.
   //
   static attach_result
   wait_companion (process_id p, DWORD timeout) noexcept
@@ -189,7 +189,7 @@ namespace companion
 
     // The thread exit code is the low 32 bits of the module handle. Zero
     // means that either LoadLibraryW() failed or the module was loaded at a
-    // 4G boundary. The companion status resolves this later (see attach()).
+    // 4G boundary. Companion status resolves this later (see attach()).
     //
     return x != 0 ? load_outcome::loaded : load_outcome::unknown;
   }
@@ -261,7 +261,7 @@ namespace companion
     if (o != load_outcome::loaded && o != load_outcome::unknown)
       return r;
 
-    // If the load outcome is unknown, then the companion timing out means
+    // If the load outcome is unknown, then Companion timing out means
     // the load failed.
     //
     r = wait_companion (p, settle_timeout);

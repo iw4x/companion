@@ -3,7 +3,7 @@
 The `libcompanion` C++ library provides the platform-independent parts of the
 IW4x Steam companion, a Steam client module that lets IW4x choose what Steam
 friends see as the game being played, the line under the player's name in
-their friends list. This package also contains the companion modules built
+their friends list. This package also contains Companion modules built
 from it: `iw4x-steam64.dll` for the Windows Steam client and
 `libiw4x-steam.so` with its `iw4x-steam` launcher for the native Linux Steam
 client.
@@ -19,7 +19,7 @@ requires GCC 16 or later together with the 32-bit glibc and libstdc++
 development files.
 
 The Steam client is a 32-bit program, and the programs that start it are
-64-bit. The companion is therefore installed from two build configurations
+64-bit. Companion is therefore installed from two build configurations
 into the same location: an i386 configuration, which provides the module and
 the launcher, and an x86_64 configuration, which provides the empty 64-bit
 stand-ins that keep the dynamic linker of these programs from warning about
@@ -50,7 +50,7 @@ The installation filter limits the installation to the modules, the
 launcher, and the documentation, and leaves out the library with its headers
 and `pkg-config` files.
 
-Then build and install the companion in each configuration:
+Then build and install Companion in each configuration:
 
 ```sh
 bpkg build -d companion-i686 \
@@ -85,7 +85,7 @@ Then import the library in your `buildfile`:
 import libs = libcompanion%lib{companion}
 ```
 
-Note that the library interface is internal to the companion and is not
+Note that the library interface is internal to Companion and is not
 stable.
 
 ## Importable targets

@@ -3,7 +3,7 @@
 
 #pragma once
 
-// We don't export anything from the companion module. Its entry points
+// We don't export anything from Companion module. Its entry points
 // (DllMain() and the rundll32 attach export on Windows, the ELF constructor
 // on Linux) and the protocol.hxx layouts are declared without this macro. So
 // LIBCOMPANION_SYMEXPORT is empty in every case, which keeps the symbols the

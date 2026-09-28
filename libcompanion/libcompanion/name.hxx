@@ -36,7 +36,7 @@ namespace companion
   object_name
   record_name (process_id game) noexcept;
 
-  // Names of the companion's status mapping and of the event a game sets
+  // Names of Companion's status mapping and of the event a game sets
   // after changing its record, both specific to the Steam process (Windows).
   //
   object_name

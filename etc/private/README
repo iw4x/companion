@@ -1,4 +1,4 @@
-This directory contains maintainer scripts for working on the companion. They
+This directory contains maintainer scripts for working on Companion. They
 are not part of the package and are never distributed.
 
 glibc-symbols
@@ -9,11 +9,11 @@ glibc-symbols
 
 steam-restart
 
-  Restart the Linux Steam client with the companion module loaded, which is
+  Restart the Linux Steam client with Companion module loaded, which is
   what trying a build of the module takes: the module is only loaded when
   the client starts. Optionally install from the build configurations first,
   then shut the client down, start it through the module's launcher, and
-  wait for the companion to settle. For example:
+  wait for Companion to settle. For example:
 
   etc/private/steam-restart --install ../companion-gcc32 \
                             --install ../companion-gcc

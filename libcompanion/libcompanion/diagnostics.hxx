@@ -13,7 +13,7 @@ namespace companion
 {
   // Diagnostics formatting.
   //
-  // The companion module runs inside the Steam client, partly on its network
+  // Companion module runs inside the Steam client, partly on its network
   // thread, so issuing diagnostics does not allocate or throw. Each line is
   // formatted into a fixed-size buffer and passed to the platform sink as a
   // whole (the debugger output on Windows and stderr on Linux; see

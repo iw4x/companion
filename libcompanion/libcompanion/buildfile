@@ -6,7 +6,7 @@ impl_libs = # Implementation dependencies.
 
 windows = ($cxx.target.class == 'windows')
 
-# The library excludes the companion modules' platform code (*-win32 and
+# The library excludes Companion modules' platform code (*-win32 and
 # *-linux), which keeps it platform-independent and testable on any host.
 #
 # The library also contains the vendored MinHook (see LEGAL). Its
@@ -199,7 +199,7 @@ else
   install.subdirs = true
 }
 
-# The companion modules' platform headers and MinHook's internal headers are
+# Companion modules' platform headers and MinHook's internal headers are
 # not installed. Neither is MinHook's API header on targets without the
 # hooking engine.
 #

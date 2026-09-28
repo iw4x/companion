@@ -29,10 +29,10 @@ namespace companion
   constexpr bool
   valid (companion_state) noexcept;
 
-  // Return the fully initialized status structures that the companion
+  // Return the fully initialized status structures that Companion
   // publishes.
   //
-  // On Windows the state field is the publication point: the companion
+  // On Windows the state field is the publication point: Companion
   // stores the other fields first and then stores the state with release
   // ordering. A reader loads the state with acquire ordering before copying
   // the rest.

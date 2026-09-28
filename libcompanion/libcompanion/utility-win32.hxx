@@ -23,7 +23,7 @@
 #include <libcompanion/types.hxx>
 #include <libcompanion/diagnostics.hxx>
 
-// Windows utilities shared by the part of the companion module that runs in
+// Windows utilities shared by the part of Companion module that runs in
 // the Steam client (host-win32.cxx and hook-win32.cxx) and the part that runs
 // in rundll32 (attach-win32.cxx).
 //

@@ -23,7 +23,7 @@ namespace companion
   //
   enum class process_id: std::uint32_t {};
 
-  // Linux user id. The companion status file path includes it.
+  // Linux user id. Companion status file path includes it.
   //
   enum class user_id: std::uint32_t {};
 
