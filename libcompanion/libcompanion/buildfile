@@ -4,30 +4,24 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
-# Vendored MinHook (see LEGAL).
-#
-# We build two utility libraries from it. The first is HDE, MinHook's
-# instruction length decoder, which is portable and built for every target.
-# The library uses its i386 decoder to decode the Linux Steam client's code
-# on any host (see detour.hxx). The second is the rest of MinHook, the
-# hooking engine of the Windows module.
-#
-libul{hde}: minhook/{h c}{hde32 hde64} minhook/h{table32 table64}
-
-# Note that libul{minhook} depends on HDE without listing it. Its only user,
-# the Windows module, also links libul{companion}, which lists HDE. A utility
-# library is linked in full at every point where it is reached, so listing
-# HDE in both would define its symbols twice.
-#
-libul{minhook}: minhook/h{minhook buffer trampoline} \
-  minhook/c{minhook buffer trampoline}
+windows = ($cxx.target.class == 'windows')
 
 # The library excludes the companion modules' platform code (*-win32 and
 # *-linux), which keeps it platform-independent and testable on any host.
 #
+# The library also contains the vendored MinHook (see LEGAL). Its
+# instruction length decoder (HDE) is portable and built for every target.
+# The detour builder uses the i386 decoder to decode the Linux Steam
+# client's code on any host (see detour.hxx). The hooking engine, which the
+# Windows module uses, is only built for Windows targets.
+#
 ./: lib{companion}: libul{companion}: \
   {hxx ixx txx cxx}{** -version -*-win32 -*-linux} \
-  hxx{version} libul{hde} $impl_libs $intf_libs
+  hxx{version} minhook/{h c}{hde32 hde64} minhook/h{table32 table64} \
+  $impl_libs $intf_libs
+
+libul{companion}: minhook/{h c}{minhook buffer trampoline}: \
+  include = $windows
 
 hxx{version}: in{version} $src_root/manifest
 
@@ -37,12 +31,9 @@ hxx{version}: in{version} $src_root/manifest
 # The game expects the module next to iw4x.dll under a fixed name (see
 # companion_module_name), so the name has no lib prefix or version.
 #
-windows = ($cxx.target.class == 'windows')
-
 ./: libs{iw4x-steam64}: include = $windows
 
-libs{iw4x-steam64}: {hxx txx cxx}{*-win32} libul{companion} \
-  libul{minhook}
+libs{iw4x-steam64}: {hxx txx cxx}{*-win32} libul{companion}
 {
   bin.lib.prefix = ''
   bin.lib.suffix = ''
@@ -202,14 +193,22 @@ else
 # Install into the libcompanion/ subdirectory of, say, /usr/include/
 # recreating subdirectories.
 #
-{hxx ixx txx}{*}:
+{hxx ixx txx h}{*}:
 {
   install         = include/libcompanion/
   install.subdirs = true
 }
 
-# The companion modules' platform headers and MinHook's headers are internal
-# and not installed.
+# The companion modules' platform headers and MinHook's internal headers are
+# not installed. Neither is MinHook's API header on targets without the
+# hooking engine.
+#
+# Note: we use patterns since naming a target here would declare it in the
+# output directory, hiding the source file.
 #
 {hxx txx}{*-win32 *-linux}: install = false
-h{*}:                       install = false
+
+h{buffer* trampoline* table*}: install = false
+
+if! $windows
+  h{minhook*}: install = false
