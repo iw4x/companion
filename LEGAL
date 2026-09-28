@@ -30,6 +30,11 @@ libcompanion/libcompanion/minhook/
             - mh_executable_address() no longer reads an uninitialized
               result if VirtualQuery() fails.
 
+            - The trampoline builder refuses an x64 RIP-relative instruction
+              with the address size prefix. Upstream wrote its adjusted
+              displacement before the instruction copy since HDE decodes
+              such an instruction without a displacement.
+
             The targets are declared in libcompanion/libcompanion/buildfile.
 
   Exception: this is a bundled dependency, contrary to the "no bundled

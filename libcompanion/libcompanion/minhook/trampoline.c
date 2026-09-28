@@ -202,7 +202,14 @@ relocate (struct builder* b,
   {
     /* RIP-relative addressing (ModR/M 00???101). Adjust the displacement,
      * which precedes the immediate operands, for the new address.
+     *
+     * HDE decodes the address size prefix (67) as 16-bit addressing, which
+     * has no displacement for this ModR/M. Refuse such an instruction since
+     * its displacement position is unknown.
      */
+    if ((i->flags & HDE64_F_DISP32) == 0)
+      return false;
+
     uint32_t d = (uint32_t) ((old_address + i->len +
                               offset32 (i->disp.disp32)) -
                              (new_address + i->len));
