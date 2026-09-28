@@ -1,0 +1,49 @@
+# clangd configuration.
+#
+# The build configuration writes the compilation database into the project
+# root (see config.cc.compiledb).
+#
+# The inline (.ixx) and template (.txx) implementation files are included at
+# the end of the header with the same name and depend on its declarations.
+# clangd parses such a file as a main file with the command of a nearby
+# source file. So we parse these files as C++ headers (clang treats .ixx as a
+# module interface by default) and pre-include the owning header with one
+# fragment per file. Each new .ixx or .txx file needs a fragment here.
+#
+CompileFlags:
+  CompilationDatabase: .
+---
+If:
+  PathMatch: .*\.[it]xx
+CompileFlags:
+  Add: [-xc++-header]
+---
+If:
+  PathMatch: libcompanion/libcompanion/attach\.ixx
+CompileFlags:
+  Add: [-include, libcompanion/attach.hxx]
+---
+If:
+  PathMatch: libcompanion/libcompanion/name\.txx
+CompileFlags:
+  Add: [-include, libcompanion/name.hxx]
+---
+If:
+  PathMatch: libcompanion/libcompanion/registration\.ixx
+CompileFlags:
+  Add: [-include, libcompanion/registration.hxx]
+---
+If:
+  PathMatch: libcompanion/libcompanion/status\.ixx
+CompileFlags:
+  Add: [-include, libcompanion/status.hxx]
+---
+If:
+  PathMatch: libcompanion/libcompanion/types\.ixx
+CompileFlags:
+  Add: [-include, libcompanion/types.hxx]
+---
+If:
+  PathMatch: libcompanion/libcompanion/wire\.ixx
+CompileFlags:
+  Add: [-include, libcompanion/wire.hxx]
