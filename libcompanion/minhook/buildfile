@@ -1,0 +1,59 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Vendored MinHook.
+#
+# Vendoring MinHook is a documented exception to the no bundled dependencies
+# rule (see LEGAL for details and rationale). The unmodified upstream
+# sources are in ../../upstream/minhook/ and this package accesses them
+# through the include/ and src/ symlinks.
+#
+# We build two utility libraries. The first is HDE, MinHook's portable
+# instruction length decoder, which is built for every target. The second
+# is the rest of MinHook, the hooking engine of the Windows companion
+# module. HDE only uses <windows.h> for integer types, which
+# compat/windows.h provides on other targets.
+#
+# Upstream compiles each HDE decoder only for the matching architecture
+# (hde32 for i386 and hde64 for x64) since MinHook decodes the code of its
+# own process. libcompanion decodes i386 code on every host (see
+# ../libcompanion/detour.hxx), so our hde32.c builds the i386 decoder for
+# every target. It includes the upstream source, which is therefore excluded
+# from compilation on its own.
+#
+windows = ($c.target.class == 'windows')
+compat  = [dir_path] $src_base/compat/
+
+libul{hde}: c{hde32} src/hde/h{*} src/hde/c{* -hde32}
+libul{hde}: src/hde/c{hde32}: include = adhoc
+
+# Note that libul{minhook} depends on HDE without listing it. Its only user,
+# the Windows module, also links libcompanion, which lists HDE (see
+# ../libcompanion/buildfile). A utility library is linked in full at every
+# point where it is reached, so listing HDE in both would define its
+# symbols twice.
+#
+libul{minhook}: include/h{MinHook} src/{h c}{*}
+
+# The HDE objects use the stand-in on targets without <windows.h>. Our
+# hde32.c always uses it since it defines the architecture macro, which
+# must not be seen by the real <windows.h>.
+#
+if! $windows
+{
+  src/hde/
+  {
+    c.poptions =+ "-I$compat"
+  }
+}
+
+obj{hde32}: c.poptions =+ "-I$compat"
+
+# Install only MinHook's legal notice, which must accompany every binary
+# that contains MinHook. It goes into its own subdirectory.
+#
+h{*}:     install = false
+legal{*}: install = legal/minhook/
+
+./: libul{hde} compat/h{windows} legal{LICENSE.txt AUTHORS.txt}
+./: libul{minhook}: include = $windows

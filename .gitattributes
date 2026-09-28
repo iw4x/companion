@@ -17,3 +17,8 @@
 # Use `binary` to make sure certain files are never auto-detected as text.
 #
 #*.png binary
+
+# Third-party files retain their own notices and are exempt from our SPDX
+# header (see LEGAL).
+#
+upstream/** -spdx

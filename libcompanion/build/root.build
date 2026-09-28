@@ -14,6 +14,10 @@ ixx{*}: extension = ixx
 txx{*}: extension = txx
 cxx{*}: extension = cxx
 
+# C is needed for the vendored MinHook (see minhook/buildfile).
+#
+using c
+
 # The test target for cross-testing (running tests under Wine, etc).
 #
 test.target = $cxx.target

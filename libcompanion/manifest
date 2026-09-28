@@ -5,7 +5,7 @@ type: lib
 language: c++
 project: companion
 summary: Steam friends presence for IW4x.
-license: GPL-3.0-only ; GNU General Public License v3.0 only.
+license: GPL-3.0-only AND BSD-2-Clause ; GPL-3.0 only, with MinHook under BSD-2-Clause (see LEGAL).
 topics: game, Steam, Proton, presence
 url: https://github.com/iw4x/companion
 src-url: https://github.com/iw4x/companion

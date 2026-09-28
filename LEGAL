@@ -1,0 +1,37 @@
+This file lists the material in this repository that is not covered by
+LICENSE.md, and records the exceptions to the organization's rules that
+bringing it in required.
+
+
+upstream/minhook/
+
+  MinHook, the minimalistic x86/x64 API hooking library for Windows.
+
+  Origin:   https://github.com/TsudaKageyu/minhook
+  Version:  1.3.4 (tag v1.3.4, commit c3fcafdc10146beb5919319d0683e44e3c30d537)
+  Licence:  BSD-2-Clause (upstream/minhook/LICENSE.txt), including the
+            Hacker Disassembler Engine under src/hde/ (same file).
+  Imported: LICENSE.txt, AUTHORS.txt, include/, and src/, byte for byte.
+            Upstream's build files were left out.
+  Changes:  None. Everything the package needs on top of upstream is ours
+            and lives in the package: libcompanion/minhook/buildfile and
+            libcompanion/minhook/compat/windows.h.
+
+  Exception: this is a bundled dependency, contrary to the "no bundled
+  dependencies" rule (charter 2.2, rule 3; [PKG] 3.5), and it was granted as
+  an explicit exception on 2026-09-27.
+
+  Reason: the companion is built for Windows (the 64-bit Steam client) and
+  for Linux (the 32-bit native Steam client). On Windows it uses MinHook as a
+  whole. On Linux it uses only MinHook's instruction length decoder (HDE) for
+  its own detour, which requires building HDE against a stand-in for
+  <windows.h>. The libminhook package on cppget.org builds for Windows only
+  and doesn't expose HDE, so it can serve neither the Linux build nor the
+  stand-in.
+
+  Removal: the exception ends once a package provides HDE for every target
+  the companion is built for. The vendored copy is then deleted and replaced
+  with a depends: value.
+
+  Updating: replace the imported files with those of a newer upstream tag,
+  byte for byte, and update the version above.
