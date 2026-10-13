@@ -1,0 +1,46 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only WITH AdditionRef-IW4x-Exception-1.1
+
+: functions
+: Test the launch steps on the files that the driver creates
+:
+$* $~/launch &launch/***
+
+: execute
+: Test executing the Steam command in place of the calling process
+:
+{{
+  +cat <<'EOI' >=steam
+    #!/bin/sh
+    echo "LD_PRELOAD=$LD_PRELOAD"
+    echo "$@"
+    EOI
+  +chmod +x steam
+
+  : preload
+  :
+  : Test that the value is set. Note that the dynamic linker skips the empty
+  : entries of this value, so the command preloads nothing.
+  :
+  $* execute $~/../steam ': :' -silent foo >>'EOO'
+    LD_PRELOAD=: :
+    -silent foo
+    EOO
+
+  : no-preload
+  :
+  : Test that an empty value leaves LD_PRELOAD as it is.
+  :
+  env LD_PRELOAD= -- $* execute $~/../steam '' >>'EOO'
+    LD_PRELOAD=
+
+    EOO
+
+  : missing
+  :
+  : Test a command that does not exist.
+  :
+  $* execute $~/no-steam '' 2>>~/EOE/ != 0
+    /error: .+/
+    EOE
+}}

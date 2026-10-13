@@ -4,4 +4,8 @@
 # The common/ subdirectory contains headers that are shared by several tests
 # and is not a test itself.
 #
-./: {*/ -build/ -common/}
+./: {*/ -build/ -common/ -launch/}
+
+# The Steam client launch is only available on Linux (see launch.hxx).
+#
+./: launch/: include = ($cxx.target.class == 'linux')
