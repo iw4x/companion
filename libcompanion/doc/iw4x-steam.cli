@@ -41,6 +41,12 @@ namespace companion
      processes that these programs start, including games and Proton, do not
      inherit it.
 
+     The dynamic linker splits \cb{LD_PRELOAD} at spaces and colons. If the
+     module directory contains either, for example, because it is inside the
+     game installation, then \cb{iw4x-steam} preloads the module through the
+     \cb{iw4x-steam} symbolic link to this directory that it creates in
+     \cb{$XDG_RUNTIME_DIR}.
+
      Companion writes its diagnostics to the Steam client's \cb{stderr},
      which the client normally copies to its console log,
      \cb{~/.steam/steam/logs/console-linux.txt}. Each line starts with
@@ -65,7 +71,12 @@ namespace companion
      \li|\cb{LD_PRELOAD}
 
      The module is added in front of the existing value, which is otherwise
-     preserved.||
+     preserved.|
+
+     \li|\cb{XDG_RUNTIME_DIR}
+
+     The directory of the symbolic link to the module directory if the latter
+     contains spaces or colons.||
 
      \h|FILES|
 
