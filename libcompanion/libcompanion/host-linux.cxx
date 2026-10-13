@@ -44,6 +44,7 @@
 #include <libcompanion/types.hxx>
 #include <libcompanion/locate.hxx>
 #include <libcompanion/status.hxx>
+#include <libcompanion/preload.hxx>
 #include <libcompanion/contract.hxx>
 #include <libcompanion/protocol.hxx>
 #include <libcompanion/hook-linux.hxx>
@@ -52,10 +53,6 @@ using namespace std;
 
 namespace companion
 {
-  // Module file name as the launcher preloads it.
-  //
-  static constexpr string_view module_file ("libcompanion.so");
-
   // Steam client executable and the library that contains the send
   // function.
   //
@@ -126,7 +123,7 @@ namespace companion
 
     if (s.size () >= preload_capacity)
     {
-      diag ("LD_PRELOAD is too long to remove {} from it", module_file);
+      diag ("LD_PRELOAD is too long to remove {} from it", preload_file);
       return;
     }
 
@@ -147,7 +144,7 @@ namespace companion
       if (x.empty ())
         continue;
 
-      if (file_name (x) == module_file)
+      if (file_name (x) == preload_file)
       {
         found = true;
         continue;
