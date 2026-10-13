@@ -117,6 +117,3 @@ libcompanion/doc/style/
   Version:  revision 05646557e84ff39240be24af6bba3376db6da697
   Licence:  MIT (libcompanion/doc/style/LICENSE), copyright the build2
             authors.
-  Imported: the style sheets and LICENSE, byte for byte, as used by the
-            IW4x toolchain repository.
-  Changes:  None.
