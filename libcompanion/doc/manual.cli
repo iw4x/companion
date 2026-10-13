@@ -336,11 +336,10 @@ than the Steam client, which the module recognizes by its executable name
 
 \h#linux-startup|Startup|
 
-Companion publishes its status in the
-\c{/dev/shm/iw4x-steam-companion.\i{uid}} file, where \i{uid} is the user
-id, and keeps this file locked while it runs. Another companion of the same
-user, for example, one in a second Steam client, fails to lock the file and
-does nothing:
+Companion publishes its status in the \c{/dev/shm/companion.\i{uid}}
+file, where \i{uid} is the user id, and keeps this file locked while it
+runs. Another companion of the same user, for example, one in a second Steam
+client, fails to lock the file and does nothing:
 
 \
 [companion] another companion is resident, staying inert
@@ -613,11 +612,11 @@ struct status
 };
 \
 
-On Linux the status is published in the
-\c{/dev/shm/iw4x-steam-companion.}\i{uid} file, where \i{uid} is the real
-user id, which the game reads from \c{/proc/self/status}. The Linux status
-also contains the Steam client's process id, which lets the game recognize
-a status left behind by a crashed client:
+On Linux the status is published in the \c{/dev/shm/companion.}\i{uid}
+file, where \i{uid} is the real user id, which the game reads from
+\c{/proc/self/status}. The Linux status also contains the Steam client's
+process id, which lets the game recognize a status left behind by a crashed
+client:
 
 \
 struct unix_status

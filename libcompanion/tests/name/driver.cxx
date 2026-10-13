@@ -36,7 +36,7 @@ static_assert (
 static_assert (
   string_view (details::format_key<char, unix_path_capacity> (
                  unix_status_format, 4294967295).data ()) ==
-  "/dev/shm/iw4x-steam-companion.4294967295");
+  "/dev/shm/companion.4294967295");
 
 static_assert (details::key_format_size ("a%u")    == 1 + 10 + 1);
 static_assert (details::key_format_size (L"a%lub") == 1 + 10 + 1 + 1);

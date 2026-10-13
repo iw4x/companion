@@ -91,7 +91,7 @@ namespace companion
      The 64-bit stand-in. The \cb{haswell} and \cb{xeon_phi} subdirectories
      contain the same stand-in.|
 
-     \li|\c{\b{/dev/shm/iw4x-steam-companion.}\i{uid}}
+     \li|\c{\b{/dev/shm/companion.}\i{uid}}
 
      Companion status, which the game reads. Companion keeps the
      file locked while it runs, so only one companion is active per user.||

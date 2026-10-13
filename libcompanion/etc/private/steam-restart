@@ -87,7 +87,7 @@ done
 
 steam="${COMPANION_STEAM:-steam}"
 uid="$(id -u)"
-status="/dev/shm/iw4x-steam-companion.$uid"
+status="/dev/shm/companion.$uid"
 launcher="$prefix/bin/companion"
 
 # The client writes its output (including Companion's diagnostics) to

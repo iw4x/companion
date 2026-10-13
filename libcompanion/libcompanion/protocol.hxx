@@ -212,7 +212,7 @@ namespace companion
     "/dev/shm/iw4x-presence.%u");
 
   inline constexpr const char* unix_status_format (
-    "/dev/shm/iw4x-steam-companion.%u");
+    "/dev/shm/companion.%u");
 
   inline constexpr const char* unix_record_directory ("/dev/shm");
   inline constexpr const char* unix_record_prefix    ("iw4x-presence.");
@@ -224,7 +224,7 @@ namespace companion
     L"\\\\?\\unix\\dev\\shm\\iw4x-presence.%u");
 
   inline constexpr const wchar_t* wine_status_format (
-    L"\\\\?\\unix\\dev\\shm\\iw4x-steam-companion.%u");
+    L"\\\\?\\unix\\dev\\shm\\companion.%u");
 
   inline constexpr std::size_t unix_path_capacity (64);
 }
