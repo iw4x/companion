@@ -19,7 +19,7 @@ page.
 
 In this document we use the term \i{companion} to refer to the code that
 runs in the Steam client and \i{module} to refer to the file that contains
-this code, \c{iw4x-steam64.dll} on Windows and \c{libiw4x-steam.so} on
+this code, \c{companion64.dll} on Windows and \c{libiw4x-steam.so} on
 Linux. The \i{game} is always IW4x and the \i{title} is the text that Steam
 friends see as the game being played.
 
@@ -57,7 +57,7 @@ There is a companion for each Steam client that IW4x runs with:
 
 \dl|
 
-\li|\c{\b{iw4x-steam64.dll}}
+\li|\c{\b{companion64.dll}}
 
 The Windows module for the 64-bit Windows Steam client. The game ships this
 module next to \c{iw4x.dll} and loads it into the running Steam client, so
@@ -425,7 +425,7 @@ module's \c{IW4xAttach} entry point in \c{rundll32.exe} and passing the
 Steam client's process id:
 
 \
-rundll32.exe \"...\\iw4x-steam64.dll\",IW4xAttach 5120
+rundll32.exe \"...\\companion64.dll\",IW4xAttach 5120
 \
 
 The entry point verifies that the process is a 64-bit Steam client and
@@ -493,7 +493,7 @@ signals a named event after every change to the record. This event is how
 Companion learns about the change.
 
 Companion writes its diagnostics to the debugger output, where each
-line starts with \c{[iw4x-steam64]}. To view them, use a tool such as
+line starts with \c{[companion64]}. To view them, use a tool such as
 DebugView.
 
 \h1#protocol|Game Protocol|
@@ -661,7 +661,7 @@ The package provides the following importable targets:
 
 \
 lib{companion}
-libs{iw4x-steam64}
+libs{companion64}
 libs{iw4x-steam}
 exe{iw4x-steam}
 \
@@ -670,7 +670,7 @@ The \c{lib{companion\}} library contains the platform-independent parts of
 Companion along with MinHook, whose headers are installed into the
 \c{libcompanion/minhook/} subdirectory. The instruction decoder headers,
 \c{hde32.h} and \c{hde64.h}, are installed on every target and the hooking
-engine header, \c{minhook.h}, only on Windows. The \c{libs{iw4x-steam64\}}
+engine header, \c{minhook.h}, only on Windows. The \c{libs{companion64\}}
 target is the Windows module and is only built for x86_64 Windows. The
 \c{libs{iw4x-steam\}} target is the Linux module and \c{exe{iw4x-steam\}}
 is its launcher. Both are only built for i386 Linux and the launcher only

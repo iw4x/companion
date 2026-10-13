@@ -180,7 +180,7 @@ namespace companion
   // and attach entry point name. Note that rundll32 first looks for the
   // export with the W suffix and passes it the command line in UTF-16.
   //
-  inline constexpr const wchar_t* companion_module_name (L"iw4x-steam64.dll");
+  inline constexpr const wchar_t* companion_module_name (L"companion64.dll");
   inline constexpr const char*    attach_entry_point    ("IW4xAttach");
 
   // Windows object name formats. The game formats them with swprintf() and

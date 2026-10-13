@@ -4,13 +4,13 @@ The `libcompanion` C++ library provides the platform-independent parts of the
 IW4x Steam companion, a Steam client module that lets IW4x choose what Steam
 friends see as the game being played, the line under the player's name in
 their friends list. This package also contains Companion modules built
-from it: `iw4x-steam64.dll` for the Windows Steam client and
+from it: `companion64.dll` for the Windows Steam client and
 `libiw4x-steam.so` with its `iw4x-steam` launcher for the native Linux Steam
 client.
 
 ## Usage
 
-On Windows, the game comes with `iw4x-steam64.dll` and loads it into the
+On Windows, the game comes with `companion64.dll` and loads it into the
 Steam client. There is nothing to install.
 
 On Linux, the `iw4x-steam` launcher starts the native Steam client with the
@@ -94,7 +94,7 @@ This package provides the following importable targets:
 
 ```
 lib{companion}
-libs{iw4x-steam64}
+libs{companion64}
 libs{iw4x-steam}
 exe{iw4x-steam}
 ```
@@ -103,7 +103,7 @@ The `lib{companion}` library contains the platform-independent parts of the
 companion along with MinHook. The MinHook headers are installed into the
 `libcompanion/minhook/` subdirectory: `hde32.h` and `hde64.h`, the instruction
 decoders, on every target and `minhook.h`, the hooking engine, only on Windows.
-The `libs{iw4x-steam64}` target is the Windows module and is only built for
+The `libs{companion64}` target is the Windows module and is only built for
 x86_64 Windows. The `libs{iw4x-steam}` target is the Linux module and
 `exe{iw4x-steam}` is its launcher. Both are only built for i386 Linux and the
 launcher only when installing.

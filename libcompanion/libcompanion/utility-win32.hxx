@@ -35,7 +35,7 @@ namespace companion
   // OutputDebugString(). They can be viewed with DebugView or an attached
   // debugger and, under Wine, on the terminal with WINEDEBUG=+debugstr.
   //
-  inline constexpr std::string_view diag_prefix ("[iw4x-steam64] ");
+  inline constexpr std::string_view diag_prefix ("[companion64] ");
 
   void
   write_diag (const diag_line&) noexcept;
