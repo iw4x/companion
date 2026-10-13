@@ -5,7 +5,7 @@ IW4x Steam companion, a Steam client module that lets IW4x choose what Steam
 friends see as the game being played, the line under the player's name in
 their friends list. This package also contains Companion modules built
 from it: `companion64.dll` for the Windows Steam client and
-`libiw4x-steam.so` with its `iw4x-steam` launcher for the native Linux Steam
+`libcompanion.so` with its `companion` launcher for the native Linux Steam
 client.
 
 ## Usage
@@ -13,7 +13,7 @@ client.
 On Windows, the game comes with `companion64.dll` and loads it into the
 Steam client. There is nothing to install.
 
-On Linux, the `iw4x-steam` launcher starts the native Steam client with the
+On Linux, the `companion` launcher starts the native Steam client with the
 module preloaded. The module requires glibc 2.36 or later, and building it
 requires GCC 16 or later together with the 32-bit glibc and libstdc++
 development files.
@@ -36,14 +36,14 @@ bpkg create -d companion-i686 cc   \
   config.cc.coptions=-O2           \
   config.install.root=/usr/local   \
   config.install.sudo=sudo         \
-  config.install.filter='lib/iw4x-steam/@true lib/@false include/@false'
+  config.install.filter='lib/companion/@true lib/@false include/@false'
 
 bpkg create -d companion-x86_64 cc \
   config.cxx=g++                   \
   config.cc.coptions=-O2           \
   config.install.root=/usr/local   \
   config.install.sudo=sudo         \
-  config.install.filter='lib/iw4x-steam/@true lib/@false include/@false'
+  config.install.filter='lib/companion/@true lib/@false include/@false'
 ```
 
 The installation filter limits the installation to the modules, the
@@ -65,11 +65,11 @@ bpkg install -d companion-x86_64 libcompanion
 Finally, exit Steam if it is running and start it with the launcher:
 
 ```sh
-iw4x-steam
+companion
 ```
 
 The launcher passes its arguments to `steam` and fails if Steam is already
-running. To run a different Steam command, set the `IW4X_STEAM` environment
+running. To run a different Steam command, set the `COMPANION_STEAM` environment
 variable.
 
 To start using `libcompanion` in your project, add the following `depends`
@@ -95,8 +95,8 @@ This package provides the following importable targets:
 ```
 lib{companion}
 libs{companion64}
-libs{iw4x-steam}
-exe{iw4x-steam}
+i686/libs{companion}
+exe{companion}
 ```
 
 The `lib{companion}` library contains the platform-independent parts of the
@@ -104,6 +104,6 @@ companion along with MinHook. The MinHook headers are installed into the
 `libcompanion/minhook/` subdirectory: `hde32.h` and `hde64.h`, the instruction
 decoders, on every target and `minhook.h`, the hooking engine, only on Windows.
 The `libs{companion64}` target is the Windows module and is only built for
-x86_64 Windows. The `libs{iw4x-steam}` target is the Linux module and
-`exe{iw4x-steam}` is its launcher. Both are only built for i386 Linux and the
+x86_64 Windows. The `i686/libs{companion}` target is the Linux module and
+`exe{companion}` is its launcher. Both are only built for i386 Linux and the
 launcher only when installing.

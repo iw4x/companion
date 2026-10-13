@@ -13,7 +13,7 @@ xhtml{*}: extension = xhtml
 # The documentation sources. Note that file{} targets (and the cli{} and css{}
 # targets derived from it) are distributed but not installed.
 #
-./: cli{iw4x-steam manual} file{man-* doc-*} style/{css{*} file{LICENSE}}
+./: cli{companion manual} file{man-* doc-*} style/{css{*} file{LICENSE}}
 
 # The man page and the manual are generated with the CLI compiler in the
 # development build and distributed, so that the consumption build gets them
@@ -37,7 +37,7 @@ pregenerated/{man1 xhtml}{*}: dist = (!$develop)
 ## Development build ($develop == true).
 #
 
-./: man1{iw4x-steam} xhtml{iw4x-steam libcompanion-manual}: include = $develop
+./: man1{companion} xhtml{companion libcompanion-manual}: include = $develop
 
 if $develop
 {
@@ -53,7 +53,7 @@ if $develop
                 -v copyright='the IW4x authors' -v date="$doc_date" \
                 --suppress-undocumented
 
-  # The man page refers to the manual as companion (see iw4x-steam.cli),
+  # The man page refers to the manual as companion (see companion.cli),
   # which becomes a link in the HTML version and plain text in the man
   # version.
   #
@@ -65,7 +65,7 @@ if $develop
 # locations to the paths of the pregenerated versions (which are only
 # distributed in the consumption build, see above).
 #
-man1{iw4x-steam} xhtml{iw4x-steam libcompanion-manual}: \
+man1{companion} xhtml{companion libcompanion-manual}: \
   dist = ($develop ? pregenerated/ : false)
 
 # The launcher only exists on Linux (see ../libcompanion/buildfile), so its
@@ -73,11 +73,11 @@ man1{iw4x-steam} xhtml{iw4x-steam libcompanion-manual}: \
 #
 if ($cxx.target.class != 'linux')
 {
-  {man1 xhtml}{iw4x-steam}:              install = false
-  pregenerated/{man1 xhtml}{iw4x-steam}: install = false
+  {man1 xhtml}{companion}:              install = false
+  pregenerated/{man1 xhtml}{companion}: install = false
 }
 
-man1{iw4x-steam}: cli{iw4x-steam} file{man-prologue.1 man-epilogue.1} $cli
+man1{companion}: cli{companion} file{man-prologue.1 man-epilogue.1} $cli
 %
 if $develop
 {{
@@ -90,7 +90,7 @@ if $develop
     --stdout $path($<[0]) >$path($>)
 }}
 
-xhtml{iw4x-steam}: cli{iw4x-steam} file{man-prologue.xhtml man-epilogue.xhtml} \
+xhtml{companion}: cli{companion} file{man-prologue.xhtml man-epilogue.xhtml} \
                    style/css{common pre-box man} $cli
 %
 if $develop

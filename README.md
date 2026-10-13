@@ -6,7 +6,7 @@ see for IW4x.
 ## Usage
 
 On Windows the game comes with `companion` and loads it into the Steam
-client. On Linux the Steam client is started with the `iw4x-steam` launcher
+client. On Linux the Steam client is started with the `companion` launcher
 from the `linux/` subdirectory of the IW4x installation. To build and install
 `companion` from source, see [libcompanion/README.md](libcompanion/README.md).
 

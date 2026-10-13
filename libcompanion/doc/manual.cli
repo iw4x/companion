@@ -14,12 +14,12 @@
 
 This document describes the IW4x Steam companion (\c{companion}) along
 with \c{libcompanion}, the library that it is built from. For the command
-line interface of the Linux launcher refer to the \l{iw4x-steam(1)} man
+line interface of the Linux launcher refer to the \l{companion(1)} man
 page.
 
 In this document we use the term \i{companion} to refer to the code that
 runs in the Steam client and \i{module} to refer to the file that contains
-this code, \c{companion64.dll} on Windows and \c{libiw4x-steam.so} on
+this code, \c{companion64.dll} on Windows and \c{libcompanion.so} on
 Linux. The \i{game} is always IW4x and the \i{title} is the text that Steam
 friends see as the game being played.
 
@@ -63,12 +63,12 @@ The Windows module for the 64-bit Windows Steam client. The game ships this
 module next to \c{iw4x.dll} and loads it into the running Steam client, so
 there is nothing to install.|
 
-\li|\c{\b{libiw4x-steam.so}}
+\li|\c{\b{libcompanion.so}}
 
 The Linux module for the 32-bit native Linux Steam client, which runs the
 game under Proton. The Steam client can only load this module when it
 starts. This is why the module is installed together with the
-\c{iw4x-steam} launcher, which starts the Steam client with the module
+\c{companion} launcher, which starts the Steam client with the module
 preloaded.||
 
 Both modules are built from \c{libcompanion}, which contains the
@@ -108,7 +108,7 @@ installation to what the Steam client needs and leaves out the library's
 headers and \c{pkg-config} files:
 
 \
-$ f='lib/iw4x-steam/@true lib/@false include/@false'
+$ f='lib/companion/@true lib/@false include/@false'
 
 $ bpkg create -d companion-i686 cc   \\
   config.cxx='g++ -m32'            \\
@@ -148,20 +148,20 @@ Let's start Steam with Companion. The module can only be loaded when
 the Steam client starts, so if Steam is already running, we exit it first:
 
 \
-$ iw4x-steam
+$ companion
 \
 
 \N|The launcher passes its arguments to \c{steam} and refuses to start if
-Steam is still running. See \l{iw4x-steam(1)} for details.|
+Steam is still running. See \l{companion(1)} for details.|
 
 Companion writes its diagnostics to the Steam client's \c{stderr},
 which the client copies to its console log. Let's see what we've got:
 
 \
-$ grep -o '\\[iw4x-steam\\].*' ~/.steam/steam/logs/console-linux.txt
-[iw4x-steam] send function at steamclient.so+0x2dca890 (1 references)
-[iw4x-steam] hooked the send function (9 bytes relocated)
-[iw4x-steam] active (build 2)
+$ grep -o '\\[companion\\].*' ~/.steam/steam/logs/console-linux.txt
+[companion] send function at steamclient.so+0x2dca890 (1 references)
+[companion] hooked the send function (9 bytes relocated)
+[companion] active (build 2)
 \
 
 The first line tells us that Companion found the function through
@@ -173,8 +173,8 @@ companion is idle until a game registers.
 Now let's start the game and look at the log again:
 
 \
-[iw4x-steam] record changed
-[iw4x-steam] resent GamesPlayed on connection 0xdced7cd0 (294 -> 308
+[companion] record changed
+[companion] resent GamesPlayed on connection 0xdced7cd0 (294 -> 308
   bytes, after a frame on 0xdce81d40)
 \
 
@@ -243,7 +243,7 @@ Steam build that Companion does not recognize and that it reports as
 candidates that were found, for example:
 
 \
-[iw4x-steam] unable to locate the send function: ambiguous (4
+[companion] unable to locate the send function: ambiguous (4
   references, 2 candidates)
 \
 
@@ -309,7 +309,7 @@ that runs in such a container.
 
 The Steam client does not load plugins, so the module is loaded with
 \c{LD_PRELOAD}. This is why the module must be in place when the Steam
-client starts and why the Steam client is started with the \c{iw4x-steam}
+client starts and why the Steam client is started with the \c{companion}
 launcher.
 
 A chain of 64-bit programs starts the Steam client and they all inherit
@@ -319,7 +319,7 @@ these warnings, the launcher refers to the module through the dynamic
 linker's \c{$PLATFORM} token:
 
 \
-LD_PRELOAD=/usr/local/lib/iw4x-steam/$PLATFORM/libiw4x-steam.so
+LD_PRELOAD=/usr/local/lib/companion/$PLATFORM/libcompanion.so
 \
 
 The dynamic linker expands \c{$PLATFORM} in each process separately. In
@@ -343,7 +343,7 @@ user, for example, one in a second Steam client, fails to lock the file and
 does nothing:
 
 \
-[iw4x-steam] another companion is resident, staying inert
+[companion] another companion is resident, staying inert
 \
 
 The Steam client loads \c{steamclient.so} once its bootstrapper finishes
@@ -382,7 +382,7 @@ most 256 of them and issues diagnostics if it runs out of processes to
 visit:
 
 \
-[iw4x-steam] no record for process 4242 (overflow)
+[companion] no record for process 4242 (overflow)
 \
 
 It also issues diagnostics if the reported process is the Steam client or
@@ -662,8 +662,8 @@ The package provides the following importable targets:
 \
 lib{companion}
 libs{companion64}
-libs{iw4x-steam}
-exe{iw4x-steam}
+i686/libs{companion}
+exe{companion}
 \
 
 The \c{lib{companion\}} library contains the platform-independent parts of
@@ -672,7 +672,7 @@ Companion along with MinHook, whose headers are installed into the
 \c{hde32.h} and \c{hde64.h}, are installed on every target and the hooking
 engine header, \c{minhook.h}, only on Windows. The \c{libs{companion64\}}
 target is the Windows module and is only built for x86_64 Windows. The
-\c{libs{iw4x-steam\}} target is the Linux module and \c{exe{iw4x-steam\}}
+\c{i686/libs{companion\}} target is the Linux module and \c{exe{companion\}}
 is its launcher. Both are only built for i386 Linux and the launcher only
 when installing.
 "
