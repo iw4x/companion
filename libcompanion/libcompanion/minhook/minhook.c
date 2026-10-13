@@ -39,6 +39,14 @@
 #include <libcompanion/minhook/buffer.h>
 #include <libcompanion/minhook/trampoline.h>
 
+/* mh_create_hook_api_ex() copies a FARPROC into a void*, which requires
+ * the two to have the same size. We check this with an array whose size is
+ * negative otherwise rather than with _Static_assert since MSVC only
+ * supports the latter in its C11 mode, which build2 does not enable.
+ */
+typedef char
+mh_farproc_size_check[sizeof (FARPROC) == sizeof (void*) ? 1 : -1];
+
 /* Initial capacities of the hook and the thread lists.
  */
 #define INITIAL_HOOK_CAPACITY   32
@@ -840,8 +848,6 @@ mh_create_hook_api_ex (const wchar_t* module,
 
   if (f == NULL)
     return MH_ERROR_FUNCTION_NOT_FOUND;
-
-  _Static_assert (sizeof (f) == sizeof (void*), "unexpected FARPROC size");
 
   void* t;
   memcpy (&t, &f, sizeof (t));
