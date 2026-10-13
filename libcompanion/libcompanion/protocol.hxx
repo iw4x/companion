@@ -209,19 +209,19 @@ namespace companion
   // these files using Wine's \\?\unix path prefix.
   //
   inline constexpr const char* unix_record_format (
-    "/dev/shm/iw4x-presence.%u");
+    "/dev/shm/companion-presence.%u");
 
   inline constexpr const char* unix_status_format (
     "/dev/shm/companion.%u");
 
   inline constexpr const char* unix_record_directory ("/dev/shm");
-  inline constexpr const char* unix_record_prefix    ("iw4x-presence.");
+  inline constexpr const char* unix_record_prefix    ("companion-presence.");
 
   // Game-side paths of the same files as swprintf() formats with an
   // unsigned int argument.
   //
   inline constexpr const wchar_t* wine_record_format (
-    L"\\\\?\\unix\\dev\\shm\\iw4x-presence.%u");
+    L"\\\\?\\unix\\dev\\shm\\companion-presence.%u");
 
   inline constexpr const wchar_t* wine_status_format (
     L"\\\\?\\unix\\dev\\shm\\companion.%u");

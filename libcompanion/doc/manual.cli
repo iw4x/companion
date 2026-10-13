@@ -549,7 +549,7 @@ always complete. After every change to the record the game sets the
 \c{Local\\IW4x.SteamPresence.Changed.}\i{steam-pid} auto-reset event, where
 \i{steam-pid} is the Steam client's process id.
 
-On Linux the record is published in the \c{/dev/shm/iw4x-presence.}\i{pid}
+On Linux the record is published in the \c{/dev/shm/companion-presence.}\i{pid}
 file, where \i{pid} is the process id of the game's \c{wineserver} (see
 \l{#linux-lookup Game Lookup}). The game opens this file through Wine's
 \c{\\\\?\\unix\\} path prefix and writes it in one go. The Linux record has

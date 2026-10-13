@@ -20,9 +20,9 @@
 : Test the Linux protocol file paths
 :
 {{
-  $* unix-record 4242 >'/dev/shm/iw4x-presence.4242' : record
-  $* unix-status 1000 >'/dev/shm/companion.1000'     : status
-  $* unix-status 0    >'/dev/shm/companion.0'        : root
+  $* unix-record 4242 >'/dev/shm/companion-presence.4242' : record
+  $* unix-status 1000 >'/dev/shm/companion.1000'          : status
+  $* unix-status 0    >'/dev/shm/companion.0'             : root
 
   : longest
   :
