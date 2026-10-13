@@ -11,30 +11,6 @@ libcompanion/libcompanion/minhook/
   Licence:  BSD-2-Clause, including the Hacker Disassembler Engine (HDE)
             files hde32.*, hde64.*, table32.h, and table64.h. The license
             and the authors are reproduced below.
-  Imported: include/MinHook.h, src/, and src/hde/, flattened into the
-            above directory, with MinHook.h renamed to minhook.h and hook.c
-            to minhook.c. Upstream's build files, LICENSE.txt, AUTHORS.txt,
-            and src/hde/pstdint.h were left out.
-  Changes:  The code was rewritten in the style of this project: the API is
-            mh_*() (for example, mh_create_hook() for MH_CreateHook()), the
-            HDE instruction types are struct hde32_instruction and struct
-            hde64_instruction, the HDE flags are HDE32_F_* and HDE64_F_*,
-            and the Win32 type aliases are replaced with the standard C
-            types. HDE is built for every target (upstream only builds the
-            decoder for the matching architecture) and reads its operands
-            with memcpy(). Its behavior is otherwise unchanged.
-
-            Fixes in the hooking engine:
-
-            - mh_executable_address() no longer reads an uninitialized
-              result if VirtualQuery() fails.
-
-            - The trampoline builder refuses an x64 RIP-relative instruction
-              with the address size prefix. Upstream wrote its adjusted
-              displacement before the instruction copy since HDE decodes
-              such an instruction without a displacement.
-
-            The targets are declared in libcompanion/libcompanion/buildfile.
 
   MinHook license (LICENSE.txt):
 
