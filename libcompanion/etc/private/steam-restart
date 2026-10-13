@@ -8,7 +8,7 @@
 # The Steam client only loads the module at startup (see
 # libcompanion/libcompanion/host-linux.cxx), so testing a module build
 # requires a client restart. This script shuts down the running client (if
-# any), starts it detached through the module's launcher (iw4x-steam), waits
+# any), starts it detached through the module's launcher (companion), waits
 # for Companion to settle, and prints its diagnostics. The exit code is
 # 0 if Companion is active and 1 otherwise.
 #
@@ -24,7 +24,7 @@
 #
 # --prefix <dir>
 #
-#   Installation directory to run from ($HOME/.cache/iw4x-steam by default).
+#   Installation directory to run from ($HOME/.cache/companion by default).
 #
 # --timeout <seconds>
 #
@@ -32,7 +32,7 @@
 #   to settle (120 by default). The script never kills the client and fails
 #   if it doesn't exit on its own.
 #
-# The arguments after -- are passed to Steam. The IW4X_STEAM environment
+# The arguments after -- are passed to Steam. The COMPANION_STEAM environment
 # variable specifies the Steam command (steam by default), which is also
 # used for the shutdown.
 #
@@ -46,7 +46,7 @@ function info () { echo "$*" 1>&2; }
 function error () { info "$*"; exit 1; }
 
 configs=()
-prefix="$HOME/.cache/iw4x-steam"
+prefix="$HOME/.cache/companion"
 timeout=120
 
 while [ "$#" -gt 0 ]; do
@@ -85,10 +85,10 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-steam="${IW4X_STEAM:-steam}"
+steam="${COMPANION_STEAM:-steam}"
 uid="$(id -u)"
 status="/dev/shm/iw4x-steam-companion.$uid"
-launcher="$prefix/bin/iw4x-steam"
+launcher="$prefix/bin/companion"
 
 # The client writes its output (including Companion's diagnostics) to
 # its log file.
@@ -125,7 +125,7 @@ for c in "${configs[@]}"; do
   info "installing from $c into $prefix"
   b -q install: "$c/libcompanion/"              \
     config.install.root="$prefix"                 \
-    config.install.filter='lib/iw4x-steam/@true lib/@false include/@false'
+    config.install.filter='lib/companion/@true lib/@false include/@false'
 done
 
 if [ ! -x "$launcher" ]; then
@@ -169,7 +169,7 @@ setsid "$launcher" "$@" >"$log" 2>&1 </dev/null &
 state=
 pid=
 for ((i = 0; i != timeout; ++i)); do
-  if grep -q "^iw4x-steam: error" "$log" 2>/dev/null; then
+  if grep -q "^companion: error" "$log" 2>/dev/null; then
     cat "$log" 1>&2
     exit 1
   fi
@@ -200,7 +200,7 @@ if [ -f "$console" ]; then
     offset=0
   fi
 
-  tail -c "+$((offset + 1))" "$console" | grep -F "[iw4x-steam]" 1>&2 || true
+  tail -c "+$((offset + 1))" "$console" | grep -F "[companion]" 1>&2 || true
 fi
 
 case "$state" in

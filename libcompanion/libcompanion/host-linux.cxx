@@ -54,7 +54,7 @@ namespace companion
 {
   // Module file name as the launcher preloads it.
   //
-  static constexpr string_view module_file ("libiw4x-steam.so");
+  static constexpr string_view module_file ("libcompanion.so");
 
   // Steam client executable and the library that contains the send
   // function.

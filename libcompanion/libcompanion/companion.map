@@ -3,7 +3,7 @@
  */
 
 /* Linux companion module version script. It makes every symbol local (see
- * libs{iw4x-steam} in the buildfile).
+ * i686/libs{companion} in the buildfile).
  */
 {
   local: *;

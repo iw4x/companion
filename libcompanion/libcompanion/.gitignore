@@ -4,4 +4,4 @@ version.hxx
 
 # Testscript output directory (can be symlink).
 #
-test-iw4x-steam
+i686/test-companion

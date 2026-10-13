@@ -21,7 +21,7 @@ namespace companion
   // the Steam client. It is the terminal Steam was started from or wherever
   // the Steam launcher redirects it.
   //
-  inline constexpr std::string_view diag_prefix ("[iw4x-steam] ");
+  inline constexpr std::string_view diag_prefix ("[companion] ");
 
   void
   write_diag (const diag_line&) noexcept;
