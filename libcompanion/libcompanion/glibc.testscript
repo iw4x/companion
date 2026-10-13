@@ -11,3 +11,15 @@
 :
 objdump -T $0 | \
   sed -n -e 's/^(.*GLIBC_2\.(3[7-9]|[4-9][0-9]|[1-9][0-9]{2,}).*)$/\1/p'
+
+: large-file
+:
+: Print the module's references to the i386 functions that report inode
+: numbers without large file support (see buildfile). The expected output
+: is empty.
+:
+: Note that the statically linked C++ runtime opens files without large
+: file support, which only limits their size.
+:
+objdump -T $0 | \
+  sed -n -e 's/^(.*GLIBC_.* (f?stat|fstatat|lstat|readdir))$/\1/p'

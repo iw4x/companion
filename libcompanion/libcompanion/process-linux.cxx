@@ -5,7 +5,7 @@
 
 #include <fcntl.h>       // open(), openat(), fcntl()
 #include <unistd.h>      // read(), pread(), geteuid(), syscall()
-#include <sys/stat.h>    // fstat(), fstat64(), fstatat64()
+#include <sys/stat.h>    // fstat(), fstatat()
 #include <sys/syscall.h> // SYS_getdents64
 
 #include <array>
@@ -295,12 +295,9 @@ namespace companion
     if (d.fd == -1)
       return process_id (0);
 
-    // On i386 the plain stat functions fail for inode numbers that exceed
-    // 32 bits, so we use the 64-bit ones.
-    //
-    struct stat64 s;
+    struct stat s;
 
-    if (fstatat64 (d.fd, prefix + 1, &s, 0) != 0 || !S_ISDIR (s.st_mode))
+    if (fstatat (d.fd, prefix + 1, &s, 0) != 0 || !S_ISDIR (s.st_mode))
       return process_id (0);
 
     uid_t u (geteuid ());
@@ -310,7 +307,7 @@ namespace companion
                        O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC));
 
     if (f.fd == -1                ||
-        fstat64 (f.fd, &s) != 0   ||
+        fstat (f.fd, &s) != 0     ||
         !S_ISREG (s.st_mode)      ||
         s.st_uid != u)
       return process_id (0);

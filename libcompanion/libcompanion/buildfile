@@ -165,9 +165,14 @@ objs{*}: cxx.poptions += -DLIBCOMPANION_SHARED_BUILD
 # The module's code also includes glibc.hxx, which binds its glibc
 # references to the versions available in glibc 2.36 (see glibc.cxx).
 #
+# On i386 the file functions without large file support fail with
+# EOVERFLOW for files whose inode numbers exceed 32 bits, which tmpfs (and
+# so /dev/shm) and btrfs can assign. So the module's code uses the 64-bit
+# file interface throughout.
+#
 objs{*-linux glibc}:
 {
-  cxx.poptions += -include "$src_base/glibc.hxx"
+  cxx.poptions += -include "$src_base/glibc.hxx" -D_FILE_OFFSET_BITS=64
   cxx.coptions += -fvisibility=hidden
 }
 
