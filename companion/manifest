@@ -6,7 +6,7 @@ language: c++
 project: companion
 summary: Steam client launcher for Companion on Linux.
 license: other: GPL-3.0-only with IW4x Linking Exception 1.1
-topics: game, Steam, Proton, presence
+topics: game, Steam, Proton, Linux, launcher
 description-file: README.md
 url: https://github.com/iw4x/companion
 src-url: https://github.com/iw4x/companion
