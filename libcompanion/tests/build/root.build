@@ -1,7 +1,11 @@
 # Copyright (c) the IW4x authors (see the AUTHORS file).
 # SPDX-License-Identifier: GPL-3.0-only
 
-cxx.std = latest
+# As in the library (see ../../build/root.build).
+#
+using cxx.guess
+
+cxx.std = ($cxx.id == 'msvc' ? experimental : latest)
 
 using cxx
 

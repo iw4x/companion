@@ -11,7 +11,14 @@ develop = $config.libcompanion.develop
 #
 #cxx.internal.scope = current
 
-cxx.std = latest
+# MSVC only provides the C++23 parts of the standard library that we use
+# (std::formattable, for example) in its /std:c++latest mode, which build2
+# selects for `experimental` rather than `latest`. So we guess the compiler
+# first and then request the standard.
+#
+using cxx.guess
+
+cxx.std = ($cxx.id == 'msvc' ? experimental : latest)
 
 using cxx
 
