@@ -367,8 +367,7 @@ Steam reports a game with the id of the process that it tracks for the
 game, which is one of Steam's own helpers or one of Proton's processes. The
 game itself cannot find out its Linux process id since Wine performs its
 file operations in the \c{wineserver} process of its prefix. So the game
-names its record after the process id of this \c{wineserver}, which Proton
-starts in the process tree that Steam tracks.
+names its record after the process id of this \c{wineserver}.
 
 To find the record for a report, Companion searches the reported
 process and its descendants, breadth-first. For each process it tries the
@@ -389,6 +388,22 @@ visit:
 It also issues diagnostics if the reported process is the Steam client or
 one of its ancestors (\c{related}). The tree of such a process contains
 every game and is therefore not searched.
+
+In the Steam Runtime container the \c{wineserver} is a descendant of the
+reported process. Without the container the \c{wineserver} daemonizes and
+leaves the tree, as does the game. The reported process, Proton's
+\c{steam.exe}, shares the Wine prefix with them, which Proton passes in the
+\c{WINEPREFIX} environment variable. So if the tree has no record,
+Companion tries the record of the \c{wineserver} of this prefix. Wine names
+the server directory of a prefix after the prefix directory's device and
+inode numbers, and the \c{wineserver} keeps the \c{lock} file in it locked
+while it runs:
+
+\
+/tmp/.wine-1000/server-34-8186e/lock
+\
+
+The owner of this lock is the \c{wineserver} whose record Companion tries.
 
 \h#linux-glibc|glibc Compatibility|
 

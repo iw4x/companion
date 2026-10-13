@@ -309,6 +309,102 @@ namespace companion
     return false;
   }
 
+  // Find the variable in the process environment and return its value,
+  // which points into the buffer and is NUL-terminated. Return false if
+  // the variable is not set within the first environment_capacity bytes or
+  // its entry doesn't fit into the buffer.
+  //
+  // The name must include the trailing '='.
+  //
+  static bool
+  find_variable (const process_source& s,
+                 process_id p,
+                 string_view name,
+                 mutable_bytes b,
+                 string_view& r) noexcept
+  {
+    LIBCOMPANION_PRE (!name.empty () && name.back () == '=');
+
+    // Read the environment one buffer at a time, each read starting from
+    // the first entry that the previous one cut off. We don't support an
+    // entry that doesn't fit into the buffer (see above), so we skip it up
+    // to its terminating NUL.
+    //
+    bool skip (false);
+
+    for (size_t o (0); o < environment_capacity; )
+    {
+      size_t      n (min (s.environment (p, o, b), b.size ()));
+      string_view v (reinterpret_cast<const char*> (b.data ()), n);
+
+      if (n == 0)
+        break;
+
+      size_t i (0);
+
+      if (skip)
+      {
+        size_t e (v.find ('\0'));
+
+        if (e == string_view::npos)
+        {
+          o += n;
+          continue;
+        }
+
+        i = e + 1;
+        skip = false;
+      }
+
+      for (size_t e; (e = v.find ('\0', i)) != string_view::npos; i = e + 1)
+      {
+        string_view x (v.substr (i, e - i));
+
+        if (x.starts_with (name))
+        {
+          r = x.substr (name.size ());
+          return true;
+        }
+      }
+
+      // If not even one entry ends in this part, then the entry it starts
+      // with doesn't fit.
+      //
+      if (i == 0)
+      {
+        skip = true;
+        i = n;
+      }
+
+      o += i;
+    }
+
+    return false;
+  }
+
+  // Look up the record of the wineserver of the process's Wine prefix (see
+  // the header for background).
+  //
+  static bool
+  find_prefix_record (const process_source& s,
+                      process_id p,
+                      mutable_bytes b,
+                      registration& r) noexcept
+  {
+    // Wine refuses to start with a relative prefix, so the process can't be
+    // a Wine process if it has one.
+    //
+    string_view x;
+
+    if (!find_variable (s, p, "WINEPREFIX=", b, x) ||
+        !x.starts_with ('/'))
+      return false;
+
+    process_id w (s.wineserver (p, x.data ()));
+
+    return value (w) != 0 && find_record (s, w, b, r);
+  }
+
   const char*
   search_outcome_name (search_outcome o) noexcept
   {
@@ -357,6 +453,12 @@ namespace companion
 
       parse_children (v, f, q);
     }
+
+    // Try the wineserver of the reported process's Wine prefix (see the
+    // header for details).
+    //
+    if (find_prefix_record (s, p, b, r))
+      return o = search_outcome::found;
 
     return o = q.overflow ? search_outcome::overflow : search_outcome::none;
   }

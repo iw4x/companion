@@ -3,14 +3,15 @@
 
 #include <libcompanion/process-linux.hxx>
 
-#include <fcntl.h>       // open(), openat()
-#include <unistd.h>      // read(), geteuid(), syscall()
-#include <sys/stat.h>    // fstat()
+#include <fcntl.h>       // open(), openat(), fcntl()
+#include <unistd.h>      // read(), pread(), geteuid(), syscall()
+#include <sys/stat.h>    // fstat(), fstat64(), fstatat64()
 #include <sys/syscall.h> // SYS_getdents64
 
 #include <array>
 #include <cerrno>
 #include <cstdint>
+#include <cstdio>        // snprintf()
 #include <cstddef>       // size_t
 #include <cstring>       // memcpy()
 #include <string_view>
@@ -27,9 +28,11 @@ namespace companion
 {
   // /proc path formats for format_key() (see name.hxx).
   //
-  static constexpr const char* stat_format   ("/proc/%u/stat");
-  static constexpr const char* status_format ("/proc/%u/status");
-  static constexpr const char* task_format   ("/proc/%u/task");
+  static constexpr const char* stat_format        ("/proc/%u/stat");
+  static constexpr const char* status_format      ("/proc/%u/status");
+  static constexpr const char* task_format        ("/proc/%u/task");
+  static constexpr const char* environment_format ("/proc/%u/environ");
+  static constexpr const char* root_format        ("/proc/%u/root");
 
   static constexpr size_t proc_path_capacity (32);
 
@@ -40,6 +43,10 @@ namespace companion
   static_assert (details::key_format_size (status_format) <=
                  proc_path_capacity);
   static_assert (details::key_format_size (task_format) <=
+                 proc_path_capacity);
+  static_assert (details::key_format_size (environment_format) <=
+                 proc_path_capacity);
+  static_assert (details::key_format_size (root_format) <=
                  proc_path_capacity);
 
   static proc_path
@@ -205,6 +212,125 @@ namespace companion
     }
   }
 
+  // Read the part of the environment that starts at the offset (see
+  // process_source).
+  //
+  static size_t
+  read_environment (process_id p, size_t o, mutable_bytes b) noexcept
+  {
+    auto_fd f (open (format_proc (environment_format, p).data (),
+                     O_RDONLY | O_CLOEXEC));
+
+    if (f.fd == -1)
+      return 0;
+
+    ssize_t r;
+    while (interrupted (r = pread (f.fd,
+                                   b.data (),
+                                   b.size (),
+                                   static_cast<off_t> (o)))) ;
+
+    return r > 0 ? static_cast<size_t> (r) : 0;
+  }
+
+  // Wine server lock file path relative to the root directory (without the
+  // leading slash), with the device and inode numbers in hexadecimal.
+  //
+  static constexpr const char* server_format (
+    "tmp/.wine-%u/server-%llx-%llx/lock");
+
+  // Room for the longest numbers (32-bit uid, 64-bit device and inode). The
+  // format's own length also covers its conversion specifications.
+  //
+  static constexpr size_t server_path_capacity (
+    string_view (server_format).size () + 10 + 16 + 16);
+
+  using server_path = array<char, server_path_capacity>;
+
+  // Return the NUL-terminated lock file path of the server directory.
+  //
+  static server_path
+  format_server (uint32_t uid, uint64_t dev, uint64_t ino) noexcept
+  {
+    server_path r;
+    int n (snprintf (r.data (),
+                     r.size (),
+                     server_format,
+                     uid,
+                     static_cast<unsigned long long> (dev),
+                     static_cast<unsigned long long> (ino)));
+
+    LIBCOMPANION_ASSERT (n > 0 && static_cast<size_t> (n) < r.size ());
+    return r;
+  }
+
+  // Look up the wineserver of the prefix (see process_source).
+  //
+  // Wine names the server directory of a prefix after the prefix
+  // directory's device and inode numbers (see init_server_dir() in Wine's
+  // dlls/ntdll/unix/server.c). The wineserver holds a write lock on the
+  // lock file in this directory while it runs, so the lock's owner is the
+  // wineserver.
+  //
+  // Both paths are as seen by the process, which may be in a container
+  // with its own /tmp. So we resolve them in the process's root directory.
+  // Note that absolute symlinks in them still resolve in our root. Proton
+  // keeps the prefix in the Steam library, which the container shares with
+  // the host at the same path, as it does /tmp.
+  //
+  // @@ Use openat2() with RESOLVE_IN_ROOT (Linux 5.6) once we require it.
+  //
+  // Wine uses the real user id of the process. If it differs from our
+  // effective user id, then the game's record wouldn't be ours to read
+  // anyway (see read_record()).
+  //
+  static process_id
+  read_wineserver (process_id p, const char* prefix) noexcept
+  {
+    LIBCOMPANION_PRE (prefix != nullptr && prefix[0] == '/');
+
+    auto_fd d (open (format_proc (root_format, p).data (),
+                     O_PATH | O_DIRECTORY | O_CLOEXEC));
+
+    if (d.fd == -1)
+      return process_id (0);
+
+    // On i386 the plain stat functions fail for inode numbers that exceed
+    // 32 bits, so we use the 64-bit ones.
+    //
+    struct stat64 s;
+
+    if (fstatat64 (d.fd, prefix + 1, &s, 0) != 0 || !S_ISDIR (s.st_mode))
+      return process_id (0);
+
+    uid_t u (geteuid ());
+
+    auto_fd f (openat (d.fd,
+                       format_server (u, s.st_dev, s.st_ino).data (),
+                       O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC));
+
+    if (f.fd == -1                ||
+        fstat64 (f.fd, &s) != 0   ||
+        !S_ISREG (s.st_mode)      ||
+        s.st_uid != u)
+      return process_id (0);
+
+    // Ask for the owner of a lock that would conflict with a write lock on
+    // the whole file. The kernel reports the owner's pid in our pid
+    // namespace or 0 if it is not in our namespace.
+    //
+    struct flock l {};
+    l.l_type   = F_WRLCK;
+    l.l_whence = SEEK_SET;
+    l.l_start  = 0;
+    l.l_len    = 0;
+
+    if (fcntl (f.fd, F_GETLK, &l) != 0 || l.l_type == F_UNLCK || l.l_pid <= 0)
+      return process_id (0);
+
+    return process_id (static_cast<uint32_t> (l.l_pid));
+  }
+
   // Read the wineserver's record file (see proc_source in the header).
   //
   static size_t
@@ -230,5 +356,7 @@ namespace companion
     &read_stat,
     &read_status,
     &read_children,
-    &read_record};
+    &read_environment,
+    &read_record,
+    &read_wineserver};
 }

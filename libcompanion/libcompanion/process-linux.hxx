@@ -18,7 +18,9 @@ namespace companion
   // and is only read if it is a regular file owned by the current user.
   // Anyone can create files in /dev/shm, so anything else with a record
   // name was created by someone else (for example, a symlink to one of the
-  // user's files or a FIFO that is never written to).
+  // user's files or a FIFO that is never written to). The same holds for
+  // the Wine server lock file through which we look up the wineserver of a
+  // Wine prefix.
   //
   extern const process_source proc_source;
 }

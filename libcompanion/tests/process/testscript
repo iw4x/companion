@@ -159,6 +159,84 @@ $* <=../steam >'none'
     EOI
 }}
 
+: prefix
+:
+: Test the wineserver of the reported process's Wine prefix, which is
+: outside the process tree (the wineserver 200 is reparented to init).
+:
+{{
+  +cat ../steam - <<EOI >=tree
+    process 200 1 2000
+    wineserver 100 /pfx 200
+    record 200 2000 10190 IW4x
+    EOI
+
+  : found
+  :
+  cat ../tree - <<EOI | $* >'found 10190 IW4x'
+    environment 100 HOME=/home/user WINEPREFIX=/pfx
+    EOI
+
+  : unset
+  :
+  cat ../tree - <<EOI | $* >'none'
+    environment 100 HOME=/home/user
+    EOI
+
+  : relative
+  :
+  : Test a relative prefix, which Wine refuses.
+  :
+  cat ../tree - <<EOI | $* >'none'
+    environment 100 WINEPREFIX=pfx
+    wineserver 100 pfx 200
+    EOI
+
+  : wineserver
+  :
+  : Test a prefix without a running wineserver.
+  :
+  cat ../tree - <<EOI | $* >'none'
+    environment 100 WINEPREFIX=/other
+    EOI
+
+  : boundary
+  :
+  : Test a WINEPREFIX entry that the first read cuts off.
+  :
+  cat ../tree - <<EOI | $* >'found 10190 IW4x'
+    pad environment 100 4090
+    environment 100 =x WINEPREFIX=/pfx
+    EOI
+
+  : long
+  :
+  : Test an entry that exceeds the buffer, which is skipped.
+  :
+  cat ../tree - <<EOI | $* >'found 10190 IW4x'
+    pad environment 100 5000
+    environment 100 =x WINEPREFIX=/pfx
+    EOI
+
+  : capacity
+  :
+  : Test a WINEPREFIX entry past the scanned part of the environment.
+  :
+  cat ../tree - <<EOI | $* >'none'
+    pad environment 100 131072
+    environment 100 =x WINEPREFIX=/pfx
+    EOI
+
+  : overflow
+  :
+  : Test a process tree that exceeds the search capacity.
+  :
+  cat ../tree - <<EOI | $* >'found 10190 IW4x'
+    fan 100 300 300
+    environment 100 WINEPREFIX=/pfx
+    EOI
+}}
+
 : related
 :
 : Test the Steam client and its ancestors, which are not searched since

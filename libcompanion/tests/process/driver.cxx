@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <cstring>   // memcpy()
+#include <utility>   // pair, make_pair()
 #include <sstream>
 #include <iostream>
 #include <algorithm> // min()
@@ -46,13 +47,23 @@
 //   Add <count> processes with consecutive pids starting from <first> as
 //   the parent's children (all with the start time 1).
 //
-// pad stat|status|children <pid> <count>
+// environment <pid> <entry>...
+//
+//   Append the entries, each terminated with NUL, to the environment of the
+//   process.
+//
+// pad stat|status|children|environment <pid> <count>
 //
 //   Append <count> spaces to the file.
 //
 // record <pid> <start> <app> <extra info>
 //
 //   Add the record file of the wineserver process.
+//
+// wineserver <pid> <prefix> <wineserver>
+//
+//   Make <wineserver> the wineserver of the Wine prefix as seen by the
+//   process.
 //
 using namespace std;
 using namespace companion;
@@ -63,6 +74,11 @@ static map<uint32_t, string> stats;
 static map<uint32_t, string> statuses;
 static map<uint32_t, string> children;
 static map<uint32_t, string> records;
+static map<uint32_t, string> environments;
+
+// Wineservers keyed by pid and prefix.
+//
+static map<pair<uint32_t, string>, uint32_t> wineservers;
 
 // Process source functions over the file maps.
 //
@@ -102,6 +118,26 @@ static size_t
 read_record (process_id p, mutable_bytes b) noexcept
 {
   return read_file (records, p, b);
+}
+
+static size_t
+read_environment (process_id p, size_t o, mutable_bytes b) noexcept
+{
+  auto i (environments.find (value (p)));
+
+  if (i == environments.end () || o >= i->second.size ())
+    return 0;
+
+  size_t n (min (i->second.size () - o, b.size ()));
+  memcpy (b.data (), i->second.data () + o, n);
+  return n;
+}
+
+static process_id
+read_wineserver (process_id p, const char* prefix) noexcept
+{
+  auto i (wineservers.find (make_pair (value (p), string (prefix))));
+  return process_id (i != wineservers.end () ? i->second : 0);
 }
 
 // Parse a decimal number.
@@ -241,9 +277,10 @@ arity (const vector<string>& w, size_t min, size_t max)
 static map<uint32_t, string>&
 file (const string& s)
 {
-  if (s == "stat")     return stats;
-  if (s == "status")   return statuses;
-  if (s == "children") return children;
+  if (s == "stat")        return stats;
+  if (s == "status")      return statuses;
+  if (s == "children")    return children;
+  if (s == "environment") return environments;
 
   throw runtime_error ("invalid file '" + s + '\'');
 }
@@ -283,6 +320,15 @@ parse (const vector<string>& w)
     for (size_t i (2); i != w.size (); ++i)
       s += to_string (number (w[i])) + ' ';
   }
+  else if (c == "environment")
+  {
+    arity (w, 1, 64);
+
+    string& s (environments[number (w[1])]);
+
+    for (size_t i (2); i != w.size (); ++i)
+      (s += w[i]) += '\0';
+  }
   else if (c == "fan")
   {
     arity (w, 3, 3);
@@ -308,6 +354,11 @@ parse (const vector<string>& w)
     uint32_t p (number (w[1]));
     records[p] = record_content (p, number64 (w[2]), number (w[3]), w[4]);
   }
+  else if (c == "wineserver")
+  {
+    arity (w, 3, 3);
+    wineservers[make_pair (number (w[1]), w[2])] = number (w[3]);
+  }
   else
     throw runtime_error ("invalid command '" + c + '\'');
 }
@@ -331,8 +382,12 @@ try
       parse (w);
   }
 
-  const process_source s {&read_stat, &read_status, &read_children,
-                          &read_record};
+  const process_source s {&read_stat,
+                          &read_status,
+                          &read_children,
+                          &read_environment,
+                          &read_record,
+                          &read_wineserver};
 
   registration   r;
   search_outcome o (find_registration (s,
