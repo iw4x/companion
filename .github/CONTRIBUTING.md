@@ -30,8 +30,9 @@ subproject, which has a directory with a `driver.cxx` and a `testscript` for
 each tested unit, as well as the `basics/` smoke test. Since each module is
 built only for its own target, a change to the platform code needs the
 configuration for that target (see the Development section of the README
-for all three). The maintainer scripts in `libcompanion/etc/private/` are
-never distributed.
+for all three). The man page and the manual in `libcompanion/doc/` are
+only generated in a development build, which `bdep init` configures. The
+maintainer scripts in `libcompanion/etc/private/` are never distributed.
 
 Work on a branch of your fork of the repository and keep it up to date with
 `main` by rebasing it. The history is linear, so a branch with merge commits
@@ -46,12 +47,29 @@ an earlier one, fold it into the commit it fixes (`git commit --fixup` and
 `git rebase --autosquash`) and force-push the branch.
 
 The commit message is a subject line in the imperative mood, without a
-trailing period, that says what the commit does. For example:
+trailing period, that says what the commit does. It starts with one of the
+verbs of the [Keep a Changelog](https://keepachangelog.com/) categories, so
+that the history maps directly onto the `NEWS` entries:
+
+* `Add` for new features.
+* `Change` for changes in existing functionality.
+* `Deprecate` for soon-to-be removed features.
+* `Remove` for now removed features.
+* `Fix` for any bug fixes.
+* `Security` in case of vulnerabilities.
+
+The subject leaves out articles (`a`, `an`, `the`), as in `Add test for
+version header`. For example:
 
 ```
-Resend GamesPlayed report after record change
-Fix status file removal in forked child
+Add tests for HDE
+Add test for hooking unmapped address
+Change MinHook to project code style
+Remove hand-written authors file
+Fix executable address check reading uninitialized memory
 ```
+
+The history of the repository has plenty of examples to follow.
 
 ## Tests
 
@@ -96,11 +114,12 @@ is merged.
 ## Licensing
 
 By contributing to `companion`, you agree that your contribution is
-licensed under its license, the GNU General Public License, version 3,
-subject to the additional permissions described in version 1.1 of the IW4x
-Linking Exception (see `LICENSE.md` and `LICENSE-EXCEPTION.md`). MinHook,
-vendored under `libcompanion/libcompanion/minhook/`, keeps its own BSD
-2-Clause License (see `LEGAL`), which also covers changes to its files.
+licensed under its license, the GNU General Public License, version 3, with
+the additional permissions of version 1.1 of the IW4x Linking Exception (see
+`LICENSE.md` and `LICENSE-EXCEPTION.md`).
+
+MinHook, vendored under `libcompanion/libcompanion/minhook/`, keeps its own
+BSD 2-Clause License (see `LEGAL`), which also covers changes to its files.
 
 Only contribute work that you have the right to license this way. If a
 change includes code from elsewhere, say so in the pull request, together
