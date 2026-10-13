@@ -1,6 +1,5 @@
 This file lists the material in this repository that is not covered by
-LICENSE.md and LICENSE-EXCEPTION.md, and records the exceptions to the
-organization's rules that bringing it in required.
+LICENSE.md and LICENSE-EXCEPTION.md.
 
 
 libcompanion/libcompanion/minhook/
@@ -36,26 +35,6 @@ libcompanion/libcompanion/minhook/
               such an instruction without a displacement.
 
             The targets are declared in libcompanion/libcompanion/buildfile.
-
-  Exception: this is a bundled dependency, contrary to the "no bundled
-  dependencies" rule (charter 2.2, rule 3; [PKG] 3.5), and it was granted as
-  an explicit exception on 2026-09-27.
-
-  Reason: Companion is built for Windows (the 64-bit Steam client) and
-  for Linux (the 32-bit native Steam client). On Windows it uses MinHook as a
-  whole. On Linux it uses only MinHook's instruction length decoder (HDE) for
-  its own detour, which requires building HDE against a stand-in for
-  <windows.h>. The libminhook package on cppget.org builds for Windows only
-  and doesn't expose HDE, so it can serve neither the Linux build nor the
-  stand-in.
-
-  Removal: the exception ends once a package provides HDE for every target
-  Companion is built for. The vendored copy is then deleted and replaced
-  with a depends: value.
-
-  Updating: port the upstream changes since the version above into the
-  rewritten code, then update the version as well as the license and the
-  authors below.
 
   MinHook license (LICENSE.txt):
 
