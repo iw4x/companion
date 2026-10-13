@@ -1,12 +1,9 @@
 : 1
 summary: companion project repository
 
-# We consume packages from the testing repository. In practice, testing
-# functions as the de facto source of up-to-date packages while maintaining a
-# reasonable level of stability.
-#
-# For background, see:
-# build2-toolchain-packaging.xhtml#review
+# We use the testing section of cppget.org rather than stable so that new
+# versions of our dependencies are available to us as soon as they are
+# published, without waiting for them to migrate to stable.
 #
 :
 role: prerequisite
