@@ -1,6 +1,6 @@
 This file lists the material in this repository that is not covered by
-LICENSE.md, and records the exceptions to the organization's rules that
-bringing it in required.
+LICENSE.md and LICENSE-EXCEPTION.md, and records the exceptions to the
+organization's rules that bringing it in required.
 
 
 libcompanion/libcompanion/minhook/

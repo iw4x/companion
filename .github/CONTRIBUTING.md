@@ -96,10 +96,11 @@ is merged.
 ## Licensing
 
 By contributing to `companion`, you agree that your contribution is
-licensed under its license, the GNU General Public License, version 3 (see
-`LICENSE.md`). MinHook, vendored under
-`libcompanion/libcompanion/minhook/`, keeps its own BSD 2-Clause License
-(see `LEGAL`), which also covers changes to its files.
+licensed under its license, the GNU General Public License, version 3,
+subject to the additional permissions described in version 1.1 of the IW4x
+Linking Exception (see `LICENSE.md` and `LICENSE-EXCEPTION.md`). MinHook,
+vendored under `libcompanion/libcompanion/minhook/`, keeps its own BSD
+2-Clause License (see `LEGAL`), which also covers changes to its files.
 
 Only contribute work that you have the right to license this way. If a
 change includes code from elsewhere, say so in the pull request, together

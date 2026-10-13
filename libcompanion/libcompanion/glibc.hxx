@@ -1,5 +1,5 @@
 // Copyright (c) the IW4x authors (see the AUTHORS file).
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-only WITH AdditionRef-IW4x-Exception-1.1
 
 // glibc symbol version bindings of the Linux companion module for the glibc
 // 2.36 floor (see glibc.cxx).

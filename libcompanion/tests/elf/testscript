@@ -1,5 +1,5 @@
 # Copyright (c) the IW4x authors (see the AUTHORS file).
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: GPL-3.0-only WITH AdditionRef-IW4x-Exception-1.1
 
 # Each image has a code segment at 1000 and a data segment at 2000. With
 # these segments the program headers are at 34 (headers), 54 (code), 74

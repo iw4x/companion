@@ -1,5 +1,5 @@
 # Copyright (c) the IW4x authors (see the AUTHORS file).
-# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-License-Identifier: GPL-3.0-only WITH AdditionRef-IW4x-Exception-1.1
 
 # Base tree: the Steam client 10 is a child of 5, which is a child of init.
 # By default, Steam reports process 100 (started at 1000), which is 5's
