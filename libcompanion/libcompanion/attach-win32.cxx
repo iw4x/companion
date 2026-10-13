@@ -277,7 +277,7 @@ namespace companion
 // The process exit code is the attach result.
 //
 extern "C" __declspec (dllexport) void CALLBACK
-IW4xAttachW (HWND, HINSTANCE, LPWSTR arguments, int)
+companion_attachW (HWND, HINSTANCE, LPWSTR arguments, int)
 {
   using namespace companion;
 
@@ -287,7 +287,7 @@ IW4xAttachW (HWND, HINSTANCE, LPWSTR arguments, int)
   HMODULE self;
   GetModuleHandleExW (GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
                       GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                      reinterpret_cast<LPCWSTR> (&IW4xAttachW),
+                      reinterpret_cast<LPCWSTR> (&companion_attachW),
                       &self);
 
   ExitProcess (static_cast<UINT> (attach (self, arguments)));

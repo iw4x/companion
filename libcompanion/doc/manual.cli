@@ -420,12 +420,12 @@ enlists the help of the 64-bit \c{rundll32.exe}.
 
 \h#windows-attach|Attaching|
 
-The game attaches Companion to the Steam client by running the
-module's \c{IW4xAttach} entry point in \c{rundll32.exe} and passing the
-Steam client's process id:
+The game attaches Companion to the Steam client by running the module's
+\c{companion_attach} entry point in \c{rundll32.exe} and passing the Steam
+client's process id:
 
 \
-rundll32.exe \"...\\companion64.dll\",IW4xAttach 5120
+rundll32.exe \"...\\companion64.dll\",companion_attach 5120
 \
 
 The entry point verifies that the process is a 64-bit Steam client and

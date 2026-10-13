@@ -181,7 +181,7 @@ namespace companion
   // export with the W suffix and passes it the command line in UTF-16.
   //
   inline constexpr const wchar_t* companion_module_name (L"companion64.dll");
-  inline constexpr const char*    attach_entry_point    ("IW4xAttach");
+  inline constexpr const char*    attach_entry_point    ("companion_attach");
 
   // Windows object name formats. The game formats them with swprintf() and
   // an unsigned long. The names use the Local\ prefix, which is sufficient

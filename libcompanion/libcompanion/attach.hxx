@@ -15,7 +15,7 @@ namespace companion
   //
   // The game runs the entry point with the 64-bit rundll32.exe:
   //
-  //   rundll32.exe "<directory>\companion64.dll",IW4xAttach <steam pid>
+  //   rundll32.exe "<directory>\companion64.dll",companion_attach <steam pid>
   //
   // Everything after the entry point name is passed as the command line and
   // the entry point result is used as the rundll32 exit code.
