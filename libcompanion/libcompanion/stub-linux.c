@@ -4,8 +4,8 @@
 
 /* Empty 64-bit stand-in for the Linux companion module.
  *
- * The launcher preloads the module from a directory named after $PLATFORM
- * (see companion.in). The 32-bit Steam client loads the module itself and
+ * The companion program preloads the module from a directory named after
+ * $PLATFORM (see preload.hxx). The 32-bit Steam client loads the module itself and
  * the 64-bit programs that start the client load this library. Without it
  * the dynamic linker would warn in each 64-bit program that it cannot
  * preload the module.

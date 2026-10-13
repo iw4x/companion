@@ -1,0 +1,126 @@
+// Copyright (c) the IW4x authors (see the AUTHORS file).
+// SPDX-License-Identifier: GPL-3.0-only WITH AdditionRef-IW4x-Exception-1.1
+
+"\section=1"
+"\name=companion"
+"\summary=start Steam client with Companion module"
+
+namespace companion
+{
+  {
+    "<options> <steam-arg>",
+
+    "\h|SYNOPSIS|
+
+     \c{\b{companion --help}\n
+        \b{companion --version}\n
+        \b{companion --steam} [\b{--} <steam-arg>...]}
+
+     \h|DESCRIPTION|
+
+     The \cb{companion} program starts the native Linux Steam client with the
+     Companion module preloaded. While the module is loaded, Steam friends
+     see IW4x running under Proton as the game being played. The arguments
+     after \cb{--} are passed to the Steam command unchanged, for example:
+
+     \
+     $ companion --steam -- -silent
+     \
+
+     The Steam client only loads the module at startup. If the client is
+     already running without Companion, then \cb{companion} asks it to exit
+     with \cb{steam -shutdown}, waits for it to exit, and starts it again
+     with the module. Note that \cb{companion} never kills the client and
+     fails if it doesn't exit within 120 seconds. If Companion is already
+     active in the running client, then \cb{companion} executes the Steam
+     command without the module, which passes the arguments to the running
+     client.
+
+     The module is preloaded from the \cb{lib/companion/} directory of the
+     installation that \cb{companion} belongs to, specifically, from its
+     subdirectory named after the dynamic linker's \cb{$PLATFORM} token (see
+     \cb{ld.so(8)}). In the 32-bit Steam client this token expands to
+     \cb{i686}, which contains the module. In the 64-bit programs that start
+     the client it expands to \cb{x86_64}, \cb{haswell}, or \cb{xeon_phi},
+     each of which contains an empty 64-bit stand-in that keeps the dynamic
+     linker of these programs from warning about the preload. Note that the
+     module removes itself from \cb{LD_PRELOAD} as it loads, so the processes
+     that the client starts, such as Proton and the game, don't inherit it.
+
+     The dynamic linker splits \cb{LD_PRELOAD} at spaces and colons and
+     provides no way to escape them. If the module directory contains either,
+     which is normally the case when it is inside the game installation, then
+     \cb{companion} preloads the module through the \cb{companion} symbolic
+     link to this directory that it creates in \cb{$XDG_RUNTIME_DIR}.
+
+     Companion writes its diagnostics to the Steam client's \cb{stderr},
+     which the client normally copies to its console log
+     (\cb{~/.steam/steam/logs/console-linux.txt}). Each line starts with
+     \cb{[companion]} and a successful startup ends with a line similar to
+     the following:
+
+     \
+     [companion] active (build 2)
+     \
+
+     See \l{libcompanion-manual The Companion Manual} for details on how
+     Companion works and on the other diagnostics that it issues."
+  }
+
+  class options
+  {
+    "\h|OPTIONS|"
+
+    bool --steam
+    {
+      "Start the Steam client with the Companion module preloaded by
+       executing the Steam command in place of \cb{companion}."
+    }
+
+    bool --help;
+    bool --version;
+  };
+
+  {
+    "",
+
+    "\h|ENVIRONMENT|
+
+     The \cb{COMPANION_STEAM} environment variable specifies the Steam
+     command to execute. If it is unset or empty, then \cb{steam} is searched
+     for in \cb{PATH}.
+
+     The module is added in front of the existing \cb{LD_PRELOAD} value,
+     which is otherwise preserved.
+
+     The \cb{XDG_RUNTIME_DIR} environment variable specifies the directory
+     of the symbolic link to the module directory (see above). It is only
+     used if the module directory contains spaces or colons.
+
+     \h|FILES|
+
+     \dl|
+
+     \li|\c{\i{prefix}\b{/lib/companion/i686/libcompanion.so}}
+
+     Companion module.|
+
+     \li|\c{\i{prefix}\b{/lib/companion/x86_64/libcompanion.so}}
+
+     Empty 64-bit stand-in. The \cb{haswell/} and \cb{xeon_phi/}
+     subdirectories contain the same stand-in.|
+
+     \li|\c{\b{/dev/shm/companion.}\i{uid}}
+
+     Companion status, which the game reads. Companion keeps this file
+     locked while it runs, which allows only one active Companion per
+     user.||
+
+     \h|EXIT STATUS|
+
+     Non-zero exit status is returned in case of an error, for example, if
+     the module is not installed or the running Steam client doesn't exit.
+     Otherwise, with \cb{--steam}, \cb{companion} executes the Steam command
+     in its place and the exit status is that of the Steam command."
+  }
+}

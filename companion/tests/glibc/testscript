@@ -1,0 +1,23 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only WITH AdditionRef-IW4x-Exception-1.1
+
+# Note that objdump is part of binutils, which the toolchain includes.
+#
+
+: floor
+:
+: Print the program's dynamic symbols with versions above GLIBC_2.36. The
+: expected output is empty.
+:
+objdump -T $0 | \
+  sed -n -e 's/^(.*GLIBC_2\.(3[7-9]|[4-9][0-9]|[1-9][0-9]{2,}).*)$/\1/p'
+
+: large-file
+:
+: Print the program's references to the i386 functions that report inode
+: numbers without large file support. The expected output is empty. Only
+: i386 has such functions.
+:
+if ($regex.match($cxx.target.cpu, 'i[3-6]86'))
+  objdump -T $0 | \
+    sed -n -e 's/^(.*GLIBC_.* (f?stat|fstatat|lstat|readdir))$/\1/p'

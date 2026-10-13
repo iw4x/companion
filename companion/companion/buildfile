@@ -1,0 +1,142 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only WITH AdditionRef-IW4x-Exception-1.1
+
+import libs  = libcompanion%lib{companion}
+import libs += libcompanion%liba{companion-glibc}
+
+tclass = $cxx.target.class
+tcpu   = $cxx.target.cpu
+
+linux  = ($tclass == 'linux')
+i386   = $regex.match($tcpu, 'i[3-6]86')
+x86_64 = ($tcpu == 'x86_64')
+
+# The program starts the native Linux Steam client and we ship it within
+# the glibc floor, which exists for i386 and x86_64 (see libcompanion).
+#
+./: exe{companion}: include = ($linux && ($i386 || $x86_64))
+
+exe{companion}: {hxx cxx}{** -version -companion-options -utility-* \
+                             -pregenerated/**}                      \
+                hxx{version} $libs
+
+hxx{version}: in{version} $src_root/manifest
+
+# The module directory is relative to the directory of the executable,
+# which only an installation fixes (see utility.hxx).
+#
+exe{companion}: cxx{utility-installed}:   for_install = true
+exe{companion}: cxx{utility-uninstalled}: for_install = false
+
+# Build options.
+#
+cxx.poptions =+ "-I$out_root" "-I$src_root"
+
+# Note that while the -installed object file is only linked when we are
+# installing, it is compiled even if we are not.
+#
+ifn! $install.root
+  obje{utility-installed}: cxx.poptions += \
+    "-DCOMPANION_INSTALL_LIB=\"$install.resolve($install.lib, $install.bin)\""
+
+# On i386 the file functions without large file support fail for files
+# whose inode numbers exceed 32 bits (see libcompanion).
+#
+cxx.poptions += -D_FILE_OFFSET_BITS=64
+
+# We ship the executable on its own to any host, so it carries the C++
+# runtime and links our libraries statically. The glibc floor library binds
+# its glibc references to the floor.
+#
+bin.exe.lib = static shared
+
+exe{companion}: cxx.loptions += -static-libstdc++ -static-libgcc
+
+# The command line parser (development vs. consumption).
+#
+# In the development build ($develop is true), we generate the parser from
+# the .cli definition with the cli compiler and copy the result to
+# pregenerated/ so that it can be committed and distributed.
+#
+# In the consumption build ($develop is false), we use the files from
+# pregenerated/ instead, so that cli is not required to build companion.
+#
+
+## Consumption build ($develop is false).
+#
+
+# Use the pregenerated versions.
+#
+exe{companion}: pregenerated/{hxx cxx}{**}: include = (!$develop)
+
+if! $develop
+  cxx.poptions =+ "-I($src_base/pregenerated)" # Note: must come first.
+
+# Distribute the pregenerated versions only in the consumption build.
+#
+pregenerated/{hxx cxx}{**}: dist = (!$develop)
+
+#
+##
+
+## Development build ($develop is true).
+#
+
+exe{companion}: {hxx cxx}{companion-options}: include = $develop
+
+if $develop
+  import! [metadata] cli = cli%exe{cli}
+
+# In the development build we distribute the regenerated parser, remapping
+# its location to that of the pregenerated version (which is only
+# distributed in the consumption build, see above). This way the distributed
+# parser is always up to date.
+#
+<{hxx cxx}{companion-options}>: cli{companion} $cli
+{
+  dist = ($develop ? pregenerated/companion/ : false)
+}
+%
+if $develop
+{{
+  options = --std c++14                              \
+            --include-with-brackets                  \
+            --include-prefix companion               \
+            --guard-prefix COMPANION                 \
+            --cli-namespace companion::cli           \
+            --generate-parse                         \
+            --suppress-inline                        \
+            --page-usage 'companion::print_$name$_'  \
+            --long-usage                             \
+            --option-length 11                       \
+            --suppress-undocumented                  \
+            --output-suffix -options
+
+  diag cli ($<[0])
+
+  $cli $options -o $out_base $path($<[0])
+
+  # If the result differs from the pregenerated version (or there is none
+  # yet), copy it over.
+  #
+  d = [dir_path] $src_base/pregenerated/companion
+
+  if test -f $d/companion-options.hxx              && \
+     test -f $d/companion-options.cxx              && \
+     diff $d/companion-options.hxx $path($>[0]) >- && \
+     diff $d/companion-options.cxx $path($>[1]) >-
+    exit
+
+  # Note that the source directory may well be inside the script working
+  # directory (which is where b was started from), in which case what we
+  # create there would be registered for cleanup and removed once the recipe
+  # completes.
+  #
+  mkdir --no-cleanup -p $d
+
+  cp --no-cleanup $path($>[0]) $d/companion-options.hxx
+  cp --no-cleanup $path($>[1]) $d/companion-options.cxx
+}}
+
+#
+##

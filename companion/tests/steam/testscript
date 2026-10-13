@@ -1,0 +1,14 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only WITH AdditionRef-IW4x-Exception-1.1
+
+: not-installed
+:
+$* --steam 2>>EOE != 0
+  error: unable to locate module: companion is not installed
+  EOE
+
+: not-installed-arguments
+:
+$* --steam -- -silent 2>>EOE != 0
+  error: unable to locate module: companion is not installed
+  EOE

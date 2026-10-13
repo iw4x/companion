@@ -13,23 +13,23 @@ xhtml{*}: extension = xhtml
 # The documentation sources. Note that file{} targets (and the cli{} and css{}
 # targets derived from it) are distributed but not installed.
 #
-./: cli{companion manual} file{man-* doc-*} style/{css{*} file{LICENSE}}
+./: cli{manual} file{doc-*} style/{css{*} file{LICENSE}}
 
-# The man page and the manual are generated with the CLI compiler in the
-# development build and distributed, so that the consumption build gets them
-# without it. They are never kept in the repository.
+# The manual is generated with the CLI compiler in the development build and
+# distributed, so that the consumption build gets it without the compiler. It
+# is never kept in the repository.
 #
 
 ## Consumption build ($develop == false).
 #
 
-# Use the pregenerated versions, which only the distribution has.
+# Use the pregenerated version, which only the distribution has.
 #
-./: pregenerated/{man1 xhtml}{*}: include = (!$develop)
+./: pregenerated/xhtml{*}: include = (!$develop)
 
-# Distribute the pregenerated versions only in the consumption build.
+# Distribute the pregenerated version only in the consumption build.
 #
-pregenerated/{man1 xhtml}{*}: dist = (!$develop)
+pregenerated/xhtml{*}: dist = (!$develop)
 
 #
 ##
@@ -37,7 +37,7 @@ pregenerated/{man1 xhtml}{*}: dist = (!$develop)
 ## Development build ($develop == true).
 #
 
-./: man1{companion} xhtml{companion libcompanion-manual}: include = $develop
+./: xhtml{libcompanion-manual}: include = $develop
 
 if $develop
 {
@@ -53,56 +53,19 @@ if $develop
                 -v copyright='the IW4x authors' -v date="$doc_date" \
                 --suppress-undocumented
 
-  # The man page refers to the manual as companion (see companion.cli),
-  # which becomes a link in the HTML version and plain text in the man
-  # version.
+  # The manual refers to the man page of the companion program, which is
+  # installed in the documentation directory of its package, next to ours.
+  # Note that the CLI compiler applies the regex to the link that it derives
+  # from the man page reference.
   #
-  man_links  = --link-regex '%companion(#.+)?%$1%'
-  html_links = --link-regex '%companion(#.+)?%libcompanion-manual.xhtml$1%'
+  html_links = --link-regex '%companion\.xhtml%../companion/companion.xhtml%'
 }
 
-# In the development build distribute the generated versions, remapping their
-# locations to the paths of the pregenerated versions (which are only
+# In the development build distribute the generated version, remapping its
+# location to the path of the pregenerated version (which is only
 # distributed in the consumption build, see above).
 #
-man1{companion} xhtml{companion libcompanion-manual}: \
-  dist = ($develop ? pregenerated/ : false)
-
-# The launcher only exists on Linux (see ../libcompanion/buildfile), so its
-# man page is only installed there.
-#
-if ($cxx.target.class != 'linux')
-{
-  {man1 xhtml}{companion}:              install = false
-  pregenerated/{man1 xhtml}{companion}: install = false
-}
-
-man1{companion}: cli{companion} file{man-prologue.1 man-epilogue.1} $cli
-%
-if $develop
-{{
-  diag 'cli --man' ($<[0]) -> $>
-
-  $cli $doc_options --generate-man --ascii-tree \
-    $man_links                                           \
-    --man-prologue-file $path($<[1])                     \
-    --man-epilogue-file $path($<[2])                     \
-    --stdout $path($<[0]) >$path($>)
-}}
-
-xhtml{companion}: cli{companion} file{man-prologue.xhtml man-epilogue.xhtml} \
-                   style/css{common pre-box man} $cli
-%
-if $develop
-{{
-  diag 'cli --html' ($<[0]) -> $>
-
-  $cli $doc_options --generate-html --html-suffix .xhtml \
-    $html_links                                          \
-    --html-prologue-file $path($<[1])                    \
-    --html-epilogue-file $path($<[2])                    \
-    --stdout $path($<[0]) >$path($>)
-}}
+xhtml{libcompanion-manual}: dist = ($develop ? pregenerated/ : false)
 
 xhtml{libcompanion-manual}: cli{manual}                                   \
                             file{doc-prologue.xhtml doc-epilogue.xhtml}   \
@@ -115,6 +78,7 @@ if $develop
   diag 'cli --html' ($<[0]) -> $>
 
   $cli $doc_options --generate-html --html-suffix .xhtml \
+    $html_links                                          \
     --html-prologue-file $path($<[1])                    \
     --html-epilogue-file $path($<[2])                    \
     --stdout $path($<[0]) >$path($>)

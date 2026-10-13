@@ -1,0 +1,68 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only WITH AdditionRef-IW4x-Exception-1.1
+
+: help
+:
+$* --help >>~/EOO/
+  SYNOPSIS
+
+  companion --help
+  companion --version
+  companion --steam [-- <steam-arg>...]
+
+  DESCRIPTION
+  /.*/*
+  EOO
+
+: version
+:
+$* --version >>~/EOO/
+  /companion \S+/
+  /libcompanion \S+/
+  Copyright (c) the IW4x authors.
+  This is free software released under the GNU General Public License, version 3, with the IW4x Linking Exception, version 1.1.
+  EOO
+
+: no-operation
+:
+: Test a command line without --steam.
+:
+$* 2>>EOE != 0
+  error: nothing to do
+    info: specify --steam
+    info: run 'companion --help' for more information
+  EOE
+
+: unknown-option
+:
+$* --frobnicate 2>>EOE != 0
+  error: unknown option '--frobnicate'
+    info: run 'companion --help' for more information
+  EOE
+
+: unknown-argument
+:
+: Test an argument before --, where we take none.
+:
+$* --steam foo 2>>EOE != 0
+  error: unknown argument 'foo'
+    info: run 'companion --help' for more information
+  EOE
+
+: steam-arguments
+:
+: Test the Steam arguments without --steam.
+:
+$* -- -silent 2>>EOE != 0
+  error: Steam arguments specified without --steam
+    info: run 'companion --help' for more information
+  EOE
+
+: steam-option-argument
+:
+: Test that our options after -- are Steam arguments.
+:
+$* -- --steam 2>>EOE != 0
+  error: Steam arguments specified without --steam
+    info: run 'companion --help' for more information
+  EOE

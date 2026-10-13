@@ -14,8 +14,8 @@
 
 This document describes the IW4x Steam companion (\c{companion}) along
 with \c{libcompanion}, the library that it is built from. For the command
-line interface of the Linux launcher refer to the \l{companion(1)} man
-page.
+line interface of the Linux \c{companion} program refer to the
+\l{companion(1)} man page.
 
 In this document we use the term \i{companion} to refer to the code that
 runs in the Steam client and \i{module} to refer to the file that contains
@@ -68,7 +68,7 @@ there is nothing to install.|
 The Linux module for the 32-bit native Linux Steam client, which runs the
 game under Proton. The Steam client can only load this module when it
 starts. This is why the module is installed together with the
-\c{companion} launcher, which starts the Steam client with the module
+\c{companion} program, which starts the Steam client with the module
 preloaded.||
 
 Both modules are built from \c{libcompanion}, which contains the
@@ -98,9 +98,9 @@ libstdc++ development files. On Fedora, for example, these are the
 
 The Steam client is a 32-bit program and the programs that start it are
 64-bit. So we install Companion from two build configurations into the
-same location. The i386 configuration provides the module and the launcher
-and the x86_64 configuration provides the empty 64-bit stand-ins of the
-module. We will see what the stand-ins are for in \l{#linux-preload
+same location. The i386 configuration provides the module and the x86_64
+configuration provides the empty 64-bit stand-ins of the module together
+with the \c{companion} program. We will see what the stand-ins are for in \l{#linux-preload
 Preloading}.
 
 Let's create the two configurations. The installation filter limits the
@@ -140,19 +140,21 @@ $ bpkg build -d companion-i686 \\
 $ bpkg install -d companion-i686 libcompanion
 
 $ bpkg build -d companion-x86_64 \\
-  libcompanion@https://github.com/iw4x/companion.git#main
-$ bpkg install -d companion-x86_64 libcompanion
+  libcompanion@https://github.com/iw4x/companion.git#main \\
+  companion
+$ bpkg install -d companion-x86_64 libcompanion companion
 \
 
 Let's start Steam with Companion. The module can only be loaded when
-the Steam client starts, so if Steam is already running, we exit it first:
+the Steam client starts, so if Steam is already running, then
+\c{companion} shuts it down and starts it again:
 
 \
-$ companion
+$ companion --steam
 \
 
-\N|The launcher passes its arguments to \c{steam} and refuses to start if
-Steam is still running. See \l{companion(1)} for details.|
+\N|The arguments after \c{--} are passed to \c{steam}, for example,
+\c{companion --steam -- -silent}. See \l{companion(1)} for details.|
 
 Companion writes its diagnostics to the Steam client's \c{stderr},
 which the client copies to its console log. Let's see what we've got:
@@ -310,12 +312,12 @@ that runs in such a container.
 The Steam client does not load plugins, so the module is loaded with
 \c{LD_PRELOAD}. This is why the module must be in place when the Steam
 client starts and why the Steam client is started with the \c{companion}
-launcher.
+program.
 
 A chain of 64-bit programs starts the Steam client and they all inherit
 \c{LD_PRELOAD}. A 64-bit program cannot load the 32-bit module and its
 dynamic linker warns about every program that it fails to preload. To avoid
-these warnings, the launcher refers to the module through the dynamic
+these warnings, \c{companion} refers to the module through the dynamic
 linker's \c{$PLATFORM} token:
 
 \
@@ -662,7 +664,6 @@ The package provides the following importable targets:
 lib{companion}
 libs{companion64}
 i686/libs{companion}
-exe{companion}
 \
 
 The \c{lib{companion\}} library contains the platform-independent parts of
@@ -671,7 +672,7 @@ Companion along with MinHook, whose headers are installed into the
 \c{hde32.h} and \c{hde64.h}, are installed on every target and the hooking
 engine header, \c{minhook.h}, only on Windows. The \c{libs{companion64\}}
 target is the Windows module and is only built for x86_64 Windows. The
-\c{i686/libs{companion\}} target is the Linux module and \c{exe{companion\}}
-is its launcher. Both are only built for i386 Linux and the launcher only
-when installing.
+\c{i686/libs{companion\}} target is the Linux module and is only built for
+i386 Linux. The \c{companion} program that starts the Steam client with
+the module is in the \c{companion} package.
 "

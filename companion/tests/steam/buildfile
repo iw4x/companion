@@ -1,0 +1,12 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only WITH AdditionRef-IW4x-Exception-1.1
+
+# Test starting the Steam client.
+#
+# Note that we only test the uninstalled program, which fails before it
+# inspects the running Steam client, since the tests must not shut down the
+# user's client. The launch steps are tested in libcompanion.
+#
+./: testscript $companion
+
+testscript{*}: test = $companion

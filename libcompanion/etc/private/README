@@ -12,7 +12,7 @@ steam-restart
   Restart the Linux Steam client with Companion module loaded, which is
   what trying a build of the module takes: the module is only loaded when
   the client starts. Optionally install from the build configurations first,
-  then shut the client down, start it through the module's launcher, and
+  then shut the client down, start it with the companion program, and
   wait for Companion to settle. For example:
 
   libcompanion/etc/private/steam-restart --install ../companion-gcc32 \

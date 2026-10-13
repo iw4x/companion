@@ -1,0 +1,27 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only WITH AdditionRef-IW4x-Exception-1.1
+
+# As in the program (see ../../build/root.build).
+#
+cxx.std = latest
+
+using cxx
+
+hxx{*}: extension = hxx
+cxx{*}: extension = cxx
+
+# Import the program that we are testing. It only exists for the Linux
+# targets that the glibc floor supports (see ../../companion/buildfile).
+#
+tclass = $cxx.target.class
+tcpu   = $cxx.target.cpu
+
+supported = ($tclass == 'linux' && \
+             ($regex.match($tcpu, 'i[3-6]86') || $tcpu == 'x86_64'))
+
+if $supported
+  import companion = companion%exe{companion}
+
+# The test target for cross-testing (running tests under Wine, etc).
+#
+test.target = $cxx.target

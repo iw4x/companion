@@ -117,3 +117,14 @@ libcompanion/doc/style/
   Version:  revision 05646557e84ff39240be24af6bba3376db6da697
   Licence:  MIT (libcompanion/doc/style/LICENSE), copyright the build2
             authors.
+
+
+companion/doc/style/
+
+  The style sheets of the generated documentation (see
+  companion/doc/buildfile).
+
+  Origin:   https://github.com/build2/style
+  Version:  revision 05646557e84ff39240be24af6bba3376db6da697
+  Licence:  MIT (companion/doc/style/LICENSE), copyright the build2
+            authors.

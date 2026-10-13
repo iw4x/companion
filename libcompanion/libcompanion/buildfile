@@ -83,7 +83,7 @@ if ($tsys == 'mingw32')
   libs{companion64}: cxx.loptions += -static
 
 # The Linux module is preloaded into the 32-bit Steam client from
-# lib/companion/$PLATFORM/ (see companion.in). In the 64-bit programs that
+# lib/companion/$PLATFORM/ (see preload.hxx). In the 64-bit programs that
 # start the client $PLATFORM is x86_64, haswell, or xeon_phi, and the
 # directory contains an empty stand-in (see stub-linux.c). These libraries
 # share the file name, so we build each in the subdirectory that we install
@@ -129,21 +129,6 @@ i686/libs{companion}:
 }
 
 i686/libs{companion}: testscript{glibc}
-
-# The launcher locates the module relative to its own installation
-# location, so we only build it when installing. The script expands $
-# variables itself, so we substitute @-delimited ones.
-#
-./: exe{companion}: include = ($linux && $i386 && $install.root != [null])
-
-exe{companion}: in{companion}
-{
-  in.symbol = '@'
-}
-
-ifn! $install.root
-  exe{companion}: module_dir = \
-    $install.resolve($install.lib, $install.bin)companion
 
 # Nothing links the modules, so we don't install their development files.
 #

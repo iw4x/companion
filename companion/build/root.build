@@ -1,0 +1,27 @@
+# Copyright (c) the IW4x authors (see the AUTHORS file).
+# SPDX-License-Identifier: GPL-3.0-only WITH AdditionRef-IW4x-Exception-1.1
+
+# The development build generates the command line parser and the man page
+# from companion/companion.cli, which needs the CLI compiler (see
+# companion/buildfile and doc/buildfile).
+#
+config [bool] config.companion.develop ?= false
+develop = $config.companion.develop
+
+define cli: file
+cli{*}: extension = cli
+
+# Uncomment to suppress warnings coming from external libraries.
+#
+#cxx.internal.scope = current
+
+cxx.std = latest
+
+using cxx
+
+hxx{*}: extension = hxx
+cxx{*}: extension = cxx
+
+# The test target for cross-testing (running tests under Wine, etc).
+#
+test.target = $cxx.target

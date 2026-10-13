@@ -22,3 +22,10 @@
 # header (see LEGAL).
 #
 libcompanion/libcompanion/minhook/* -spdx
+companion/doc/style/** -spdx
+
+# The CLI compiler generates the command line parser of the companion program
+# and we commit a copy in pregenerated/, so that the consumption build does
+# not need the compiler. The generated files carry the compiler's own notice.
+#
+companion/companion/pregenerated/** -spdx linguist-generated

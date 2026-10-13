@@ -8,15 +8,16 @@
 # The Steam client only loads the module at startup (see
 # libcompanion/libcompanion/host-linux.cxx), so testing a module build
 # requires a client restart. This script shuts down the running client (if
-# any), starts it detached through the module's launcher (companion), waits
-# for Companion to settle, and prints its diagnostics. The exit code is
+# any), starts it detached with the companion program, waits for Companion
+# to settle, and prints its diagnostics. The exit code is
 # 0 if Companion is active and 1 otherwise.
 #
 # --install <config>
 #
 #   Install from the build configuration <config> into the prefix before
-#   restarting. Specify both the i386 configuration (the module and the
-#   launcher) and the x86_64 configuration (the module's 64-bit stand-in).
+#   restarting. Specify both the i386 configuration (the module) and the
+#   x86_64 configuration (the module's 64-bit stand-in and the companion
+#   program).
 #   For example:
 #
 #   libcompanion/etc/private/steam-restart --install ../companion-gcc32 \
@@ -88,7 +89,7 @@ done
 steam="${COMPANION_STEAM:-steam}"
 uid="$(id -u)"
 status="/dev/shm/companion.$uid"
-launcher="$prefix/bin/companion"
+program="$prefix/bin/companion"
 
 # The client writes its output (including Companion's diagnostics) to
 # its log file.
@@ -117,19 +118,26 @@ function client () # <pid>
   [ -n "$e" -a "$(basename "$e")" = steam ]
 }
 
-# Install the launcher, the module and its stand-in, and their legal
-# notices. The filter excludes the library (the module contains it) and the
-# development files.
+# Install the module and its stand-in, the program, and their legal notices.
+# The filter excludes the library (the module contains it) and the
+# development files. Note that the program from the configuration installed
+# last replaces the others.
 #
 for c in "${configs[@]}"; do
   info "installing from $c into $prefix"
-  b -q install: "$c/libcompanion/"              \
+
+  d=("$c/libcompanion/")
+  if [ -d "$c/companion" ]; then
+    d+=("$c/companion/")
+  fi
+
+  b -q install: "${d[@]}"                         \
     config.install.root="$prefix"                 \
     config.install.filter='lib/companion/@true lib/@false include/@false'
 done
 
-if [ ! -x "$launcher" ]; then
-  error "no launcher in $prefix/bin (install with --install first)"
+if [ ! -x "$program" ]; then
+  error "no companion program in $prefix/bin (install with --install first)"
 fi
 
 # Shut down the running client.
@@ -150,14 +158,14 @@ if [ -n "$(running)" ]; then
   fi
 fi
 
-# Start the client detached so that it outlives this script. The launcher's
-# output (its errors and the dynamic linker's warnings) goes to our log.
+# Start the client detached so that it outlives this script. The program's
+# output (its diagnostics and the dynamic linker's warnings) goes to our log.
 #
 log="$prefix/steam-restart.log"
 offset="$(stat -c %s "$console" 2>/dev/null || echo 0)"
 
-info "starting Steam through $launcher"
-setsid "$launcher" "$@" >"$log" 2>&1 </dev/null &
+info "starting Steam with $program"
+setsid "$program" --steam -- "$@" >"$log" 2>&1 </dev/null &
 
 # Wait for Companion to settle (publish a state other than starting;
 # see libcompanion/libcompanion/protocol.hxx) in a running Steam client. A
@@ -169,7 +177,7 @@ setsid "$launcher" "$@" >"$log" 2>&1 </dev/null &
 state=
 pid=
 for ((i = 0; i != timeout; ++i)); do
-  if grep -q "^companion: error" "$log" 2>/dev/null; then
+  if grep -q "^error:" "$log" 2>/dev/null; then
     cat "$log" 1>&2
     exit 1
   fi

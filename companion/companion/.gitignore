@@ -1,0 +1,14 @@
+/companion
+
+# Generated version header.
+#
+version.hxx
+
+# Generated command line parser (see pregenerated/ for the committed copy).
+#
+/companion-options.hxx
+/companion-options.cxx
+
+# Testscript output directory (can be symlink).
+#
+test-companion

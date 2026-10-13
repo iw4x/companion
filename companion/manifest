@@ -1,0 +1,19 @@
+: 1
+name: companion
+version: 0.1.0-a.0.z
+type: exe
+language: c++
+project: companion
+summary: Steam client launcher for IW4x companion on Linux.
+license: other: GPL-3.0-only with IW4x Linking Exception 1.1
+topics: game, Steam, Proton, presence
+description-file: README.md
+url: https://github.com/iw4x/companion
+src-url: https://github.com/iw4x/companion
+email: wroy@proton.me
+#build-error-email: wroy@proton.me
+depends: * build2 >= 0.18.0
+depends: * bpkg >= 0.18.0
+depends: * cli ^1.2.0 ? ($config.companion.develop)
+depends: libcompanion == $
+builds: default : &linux &gcc ; Linux program, only tested with GCC.
