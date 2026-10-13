@@ -48,8 +48,7 @@ an earlier one, fold it into the commit it fixes (`git commit --fixup` and
 
 The commit message is a subject line in the imperative mood, without a
 trailing period, that says what the commit does. It starts with one of the
-verbs of the [Keep a Changelog](https://keepachangelog.com/) categories, so
-that the history maps directly onto the `NEWS` entries:
+verbs of the [Keep a Changelog](https://keepachangelog.com/) categories:
 
 * `Add` for new features.
 * `Change` for changes in existing functionality.
