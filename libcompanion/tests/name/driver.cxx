@@ -31,7 +31,7 @@ using namespace companion;
 static_assert (
   wstring_view (details::format_key<wchar_t, object_name_capacity> (
                   record_name_format, 4242).data ()) ==
-  L"Local\\IW4x.SteamPresence.4242");
+  L"Local\\Companion.SteamPresence.4242");
 
 static_assert (
   string_view (details::format_key<char, unix_path_capacity> (

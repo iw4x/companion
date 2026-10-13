@@ -540,14 +540,14 @@ update both while it runs. For example, it starts with Modern Warfare 2
 account does not own it.
 
 On Windows the record is published in the
-\c{Local\\IW4x.SteamPresence.}\i{pid} named file mapping, where \i{pid} is
-the game's process id, which the record repeats. The mapping exists while
-the game holds a handle to it, so the record goes away with the game. The
-game writes the magic last with release ordering and Companion reads it
-first with acquire ordering. As a result, a record with the right magic is
-always complete. After every change to the record the game sets the
-\c{Local\\IW4x.SteamPresence.Changed.}\i{steam-pid} auto-reset event, where
-\i{steam-pid} is the Steam client's process id.
+\c{Local\\Companion.SteamPresence.}\i{pid} named file mapping, where
+\i{pid} is the game's process id, which the record repeats. The mapping
+exists while the game holds a handle to it, so the record goes away with the
+game. The game writes the magic last with release ordering and Companion
+reads it first with acquire ordering. As a result, a record with the right
+magic is always complete. After every change to the record the game sets
+the \c{Local\\Companion.SteamPresence.Changed.}\i{steam-pid} auto-reset
+event, where \i{steam-pid} is the Steam client's process id.
 
 On Linux the record is published in the \c{/dev/shm/companion-presence.}\i{pid}
 file, where \i{pid} is the process id of the game's \c{wineserver} (see
@@ -595,9 +595,9 @@ Companion does not recognize the Steam client library.|
 Companion failed to hook the send function.||
 
 On Windows the status is published in the
-\c{Local\\IW4x.SteamCompanion.}\i{steam-pid} named file mapping, where
-\i{steam-pid} is the Steam client's process id. Companion stores the
-state last with release ordering and the game loads it first with acquire
+\c{Local\\Companion.Steam.}\i{steam-pid} named file mapping, where
+\i{steam-pid} is the Steam client's process id. Companion stores the state
+last with release ordering and the game loads it first with acquire
 ordering:
 
 \

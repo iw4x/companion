@@ -194,13 +194,13 @@ namespace companion
   // sent before the record was published.
   //
   inline constexpr const wchar_t* record_name_format (
-    L"Local\\IW4x.SteamPresence.%lu");
+    L"Local\\Companion.SteamPresence.%lu");
 
   inline constexpr const wchar_t* status_name_format (
-    L"Local\\IW4x.SteamCompanion.%lu");
+    L"Local\\Companion.Steam.%lu");
 
   inline constexpr const wchar_t* record_event_format (
-    L"Local\\IW4x.SteamPresence.Changed.%lu");
+    L"Local\\Companion.SteamPresence.Changed.%lu");
 
   inline constexpr std::size_t object_name_capacity (64);
 
