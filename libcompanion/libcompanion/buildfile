@@ -14,13 +14,15 @@ linux   = ($tclass == 'linux')
 i386   = $regex.match($tcpu, 'i[3-6]86')
 x86_64 = ($tcpu == 'x86_64')
 
+glibc = ($linux && ($i386 || $x86_64))
+
 # We keep the modules' platform code out of the library so that we can build
 # and test it on any host. For the same reason we build MinHook's
 # instruction length decoder for every target (see detour.hxx).
 #
 ./: lib{companion}: libul{companion}: \
-  {hxx ixx txx cxx}{** -version -*-win32 -*-linux -glibc} hxx{version} \
-  minhook/{h c}{hde32 hde64} minhook/h{table32 table64}               \
+  {hxx ixx txx cxx}{** -version -*-win32 -*-linux -glibc*} hxx{version} \
+  minhook/{h c}{hde32 hde64} minhook/h{table32 table64}                \
   $impl_libs $intf_libs
 
 libul{companion}: minhook/{h c}{minhook buffer trampoline}: include = $windows
@@ -36,6 +38,23 @@ def{companion}: libul{companion}
 
 if ($tsys == 'mingw32')
   libs{companion}: cxx.loptions += -Wl,--export-all-symbols
+
+# The glibc floor keeps the Linux binaries that we ship within the glibc that
+# the oldest supported host provides (see glibc.cxx). The module builds it
+# from source and the other binaries link this library. It is static since
+# its definitions have to end up in each such binary.
+#
+# The linker only extracts the archive members that resolve references made
+# before the archive on its command line. But most of the definitions resolve
+# the C++ runtime's references and the compiler driver adds the runtime at
+# the end. So we link the library whole.
+#
+./: liba{companion-glibc}: include = $glibc
+
+liba{companion-glibc}: {hxx cxx}{glibc} hxx{glibc-i386 glibc-x86_64}
+{
+  bin.whole = true
+}
 
 # The Windows module is loaded into the 64-bit Steam client. The game looks
 # for it under a fixed name (see companion_module_name), so we fix the name
@@ -68,7 +87,7 @@ if ($tsys == 'mingw32')
 ./: i686/libs{companion}: include = ($linux && $i386)
 
 i686/libs{companion}: {hxx txx cxx}{*-linux} {hxx cxx}{glibc} \
-                       libul{companion} fsdir{i686/}
+                      hxx{glibc-i386} libul{companion} fsdir{i686/}
 {
   bin.lib.prefix = lib
   bin.lib.suffix = ''
@@ -142,17 +161,18 @@ c.poptions   =+ "-I$src_root"
 obja{*}: cxx.poptions += -DLIBCOMPANION_STATIC_BUILD
 objs{*}: cxx.poptions += -DLIBCOMPANION_SHARED_BUILD
 
-# The Linux module's code binds its glibc references to glibc 2.36 (see
-# glibc.cxx) and uses the 64-bit file interface since tmpfs and btrfs can
+# The Linux module's code binds its glibc references to the floor (see
+# glibc.hxx) and uses the 64-bit file interface since tmpfs and btrfs can
 # assign inode numbers that overflow the i386 one. The module exports
 # nothing, so hidden visibility lets its own references bypass the GOT and
 # the PLT.
 #
-objs{*-linux glibc}:
+objs{*-linux glibc} obja{glibc}:
 {
   cxx.poptions += -include "$src_base/glibc.hxx" -D_FILE_OFFSET_BITS=64
-  cxx.coptions += -fvisibility=hidden
 }
+
+objs{*-linux glibc}: cxx.coptions += -fvisibility=hidden
 
 # Export options.
 #
@@ -164,6 +184,13 @@ lib{companion}:
 
 liba{companion}: cxx.export.poptions += -DLIBCOMPANION_STATIC
 libs{companion}: cxx.export.poptions += -DLIBCOMPANION_SHARED
+
+# Every translation unit of a binary within the glibc floor includes the
+# bindings first. Note that we name the header by its include path, which
+# finds it the same in the source and in the installed library.
+#
+liba{companion-glibc}: cxx.export.poptions = \
+  "-I$src_root" -include libcompanion/glibc.hxx
 
 # For pre-releases use the complete version to make sure they cannot
 # be used in place of another pre-release or the final version. See
@@ -184,10 +211,13 @@ else
 }
 
 # Only the modules include their platform headers and only MinHook includes
-# its internal ones. The MinHook API is only built for Windows.
+# its internal ones. The MinHook API is only built for Windows and the glibc
+# floor for Linux.
 #
 {hxx txx}{*-win32 *-linux}: install = false
-hxx{glibc}@./:              install = false
+
+if! $glibc
+  hxx{glibc}@./ hxx{glibc-i386}@./ hxx{glibc-x86_64}@./: install = false
 
 minhook/
 {

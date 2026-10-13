@@ -1,29 +1,27 @@
 // Copyright (c) the IW4x authors (see the AUTHORS file).
 // SPDX-License-Identifier: GPL-3.0-only WITH AdditionRef-IW4x-Exception-1.1
 
-// Definitions that keep the Linux companion module within its glibc floor.
+// Definitions that keep a binary within the glibc floor.
 //
-// The module runs in the Steam client on any host, so it can only depend on
-// what the oldest supported glibc provides. This floor is glibc 2.36, which
-// is the version in Debian 12, the oldest Debian release with long-term
-// support. For our own code glibc.hxx (which every translation unit of
-// the module includes first) binds each reference to a version available at
-// the floor.
+// The Linux binaries that we ship (the companion module and our programs)
+// run on any host, so they can only depend on what the oldest supported
+// glibc provides. This floor is glibc 2.36, which is the version in Debian
+// 12, the oldest Debian release with long-term support. For our own code
+// glibc.hxx (which every translation unit of such a binary includes first)
+// binds each reference to a version available at the floor.
 //
 // The statically linked C++ runtime (libstdc++.a and libgcc_eh.a) is
 // compiled against the build host's glibc and its references bind to the
 // symbol versions of that glibc. So here we define each symbol that the
-// runtime references and the floor lacks. Like everything in the module the
-// definitions are hidden. As a result, they resolve the runtime's references
-// at link time and require nothing from glibc at runtime.
+// runtime references and the floor lacks. These definitions resolve the
+// runtime's references at link time and require nothing from glibc at
+// runtime. In the module they are hidden, like everything else in it.
 //
-// If the module requires anything else, then the floor test fails (see
+// If a binary requires anything else, then its floor test fails (see
 // glibc.testscript) and the missing definition should be added here.
 //
 #include <cctype> // isspace()
 #include <cerrno>
-
-#include <libcompanion/contract.hxx>
 
 using namespace std;
 
@@ -43,11 +41,12 @@ extern "C"
   // digit. In all the other cases the result matches C17, which parses the
   // prefix's 0 as the number and stops at the b.
   //
+  // Note that the caller is the C++ runtime, so we treat the arguments the
+  // same as glibc does and don't check them.
+  //
   unsigned long
   __isoc23_strtoul (const char* s, char** e, int b) noexcept
   {
-    LIBCOMPANION_PRE (s != nullptr);
-
     if (b == 0 || b == 2)
     {
       const char* p (s);

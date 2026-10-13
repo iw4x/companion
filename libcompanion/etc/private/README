@@ -3,9 +3,9 @@ are never distributed (see ../../buildfile).
 
 glibc-symbols
 
-  Generate the glibc compatibility header of the Linux companion module
-  (libcompanion/libcompanion/glibc.hxx) for a glibc floor. Regenerate
-  it when the floor changes.
+  Generate the glibc symbol version bindings for a glibc floor and an
+  architecture (libcompanion/libcompanion/glibc-<cpu>.hxx). Regenerate
+  them when the floor changes.
 
 steam-restart
 
