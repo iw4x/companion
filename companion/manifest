@@ -4,7 +4,7 @@ version: 0.1.0-a.0.z
 type: exe
 language: c++
 project: companion
-summary: Steam client launcher for IW4x companion on Linux.
+summary: Steam client launcher for Companion on Linux.
 license: other: GPL-3.0-only with IW4x Linking Exception 1.1
 topics: game, Steam, Proton, presence
 description-file: README.md

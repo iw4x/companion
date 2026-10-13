@@ -4,7 +4,7 @@ version: 0.1.0-a.0.z
 type: lib
 language: c++
 project: companion
-summary: Steam friends presence for IW4x.
+summary: Companion library and Steam client modules.
 license: other: GPL-3.0-only with IW4x Linking Exception 1.1 ; With MinHook under BSD-2-Clause (see LEGAL).
 topics: game, Steam, Proton, presence
 description-file: README.md
