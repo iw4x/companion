@@ -1,7 +1,15 @@
-# companion - Steam friends presence for IW4x.
+# Companion
 
-`companion` is a Steam client module that sets the title that Steam friends
-see for IW4x.
+Companion is a Steam client module that lets you choose what your Steam
+friends see as the game you are playing.
+
+<p>
+  <img alt="Steam friends window showing IW4x: Modern Warfare 2 as the game"
+       src=".github/steam-friends.png" width="320">
+</p>
+
+For details on how Companion works, including the protocol between the
+game and Companion, see Companion manual (`libcompanion/doc/manual.cli`).
 
 ## Usage
 
