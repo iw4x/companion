@@ -46,17 +46,27 @@
 //
 using namespace std;
 
+// Calls to a target function must go through its code, which the hook
+// patches, so they must not be inlined. Note that MSVC ignores the GNU
+// attribute.
+//
+#ifdef _MSC_VER
+#  define LIBCOMPANION_NOINLINE __declspec(noinline)
+#else
+#  define LIBCOMPANION_NOINLINE [[gnu::noinline]]
+#endif
+
 // Target functions. The volatile arithmetic keeps each of them long enough
 // to hook.
 //
-[[gnu::noinline]] static int
+LIBCOMPANION_NOINLINE static int
 target_a (int x)
 {
   volatile int r (x * 3);
   return r + 1;
 }
 
-[[gnu::noinline]] static int
+LIBCOMPANION_NOINLINE static int
 target_b (int x)
 {
   volatile int r (x ^ 0x55);
@@ -65,7 +75,7 @@ target_b (int x)
 
 static atomic<bool> stop;
 
-[[gnu::noinline]] static int
+LIBCOMPANION_NOINLINE static int
 target_spin (int x)
 {
   volatile int r (x);
